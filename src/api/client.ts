@@ -21,6 +21,7 @@ import type {
   TokenHistory,
   DecodeBenchJob,
   DecodeBenchListResponse,
+  EcoState,
   FleetEnergy,
   HealthResponse,
   InferenceActivity,
@@ -629,6 +630,18 @@ export function resetGpuClock(id: string, sudoPassword?: string): Promise<{ succ
     method: "DELETE",
     ...(sudoPassword ? { body: JSON.stringify({ sudoPassword }) } : {}),
   });
+}
+
+// ─── ECO clock caps ──────────────────────────────────────
+/** Set GPU and/or CPU clock caps on one Spark ("off" or MHz from ECO_LEVELS). */
+export function setSparkEco(id: string, levels: Partial<EcoState>): Promise<PowerResult> {
+  return apiFetch(`/api/sparks/${id}/eco`, { method: "POST", body: JSON.stringify(levels) });
+}
+
+/** Set GPU and/or CPU clock caps on every online Spark. */
+export function setFleetEco(levels: Partial<EcoState>): Promise<BatchPowerResult> {
+  return apiFetch("/api/sparks/eco-all", { method: "POST", body: JSON.stringify(levels) });
+}
 }
 
 // ─── Hermes update preview ───────────────────────────────

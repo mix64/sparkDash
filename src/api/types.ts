@@ -645,6 +645,12 @@ export interface SparkMetrics {
 }
 
 // ─── Spark snapshot (server pushes this) ──────────────────
+/** ECO clock cap per channel: "off" or a MHz value from ECO_LEVELS. */
+export interface EcoState {
+  gpu: string;
+  cpu: string;
+}
+
 export interface SparkSnapshot {
   id: string;
   /** Active health findings, most important first is not guaranteed; sort with sortFindings. */
@@ -665,6 +671,8 @@ export interface SparkSnapshot {
   disabledDevices: string[];
   disabledInterfaces: string[];
   storagePollDisabled?: boolean;
+  /** Last-applied ECO clock caps; cleared by the hardware on reboot. */
+  eco?: EcoState;
   /** Cluster role (head / worker / standalone) */
   role?: SparkRole;
   /** Distributed LLM worker — LLM card inactive / not shown (role === worker) */

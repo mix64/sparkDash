@@ -5,6 +5,7 @@ import { updateSpark, refreshSparkMetric, addLlmPort, removeLlmPort } from "../.
 import { SparkHeader } from "./SparkHeader";
 import { HealthList } from "../ui/HealthFindings";
 import { SparkActions } from "./SparkActions";
+import { EcoControl } from "./EcoControl";
 import { GpuPanel } from "./GpuPanel";
 import { CpuPanel } from "./CpuPanel";
 import { RamPanel } from "./RamPanel";
@@ -258,6 +259,7 @@ export function SparkPage({
   return (
     <div className="sp">
       <SparkHeader spark={spark} onEdit={onEdit} onNavigate={onNavigate} />
+      <EcoControl sparks={[spark]} />
       {/* Mobile-only action row (Update Hermes / Edit / Power) — desktop keeps them in the header. */}
       <SparkActions spark={spark} onEdit={onEdit} className="sp-mobile-actions flex sm:hidden" />
       {spark.online ? <HealthList findings={spark.health} /> : null}
