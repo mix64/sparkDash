@@ -53,6 +53,7 @@ function _clampSettings(settings) {
   s.hideWorkers = Boolean(s.hideWorkers);
   // Ensure benchDebugTraces is boolean
   s.benchDebugTraces = Boolean(s.benchDebugTraces);
+  s.benchShareImage = Boolean(s.benchShareImage);
   s.showFleetEnergy = Boolean(s.showFleetEnergy);
   s.showFleetExceptions = Boolean(s.showFleetExceptions);
   s.showOverviewSearch = Boolean(s.showOverviewSearch);
