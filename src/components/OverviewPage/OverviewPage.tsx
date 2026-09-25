@@ -7,6 +7,7 @@ import { FleetEnergyCard } from "./FleetEnergyCard";
 import { FleetAlertStrip } from "./FleetAlertStrip";
 import { FleetTokenTotals } from "./FleetTokenTotals";
 import { FleetKpis } from "./FleetKpis";
+import { EcoControl } from "../SparkPage/EcoControl";
 import { ACTIVITY_ID, ENERGY_ID, TOKENS_ID } from "../../constants";
 import { SparkCard } from "./SparkCard";
 import { ActivityFeed } from "./ActivityFeed";
@@ -240,6 +241,7 @@ export function OverviewPage({
           )}
           {sparks.length > 0 && (
             <>
+              <EcoControl sparks={sparks} fleet compact />
               {hermesMonitoredCount > 0 && (
                 <button
                   type="button"
