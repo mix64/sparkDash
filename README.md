@@ -78,6 +78,7 @@ Full history: [CHANGELOG.md](./CHANGELOG.md)
 | **GPU processes** | See the top GPU processes by VRAM usage directly in the GPU panel, including process name and memory allocation |
 | **Spark uptime** | System uptime displayed inline on each Spark header for at-a-glance availability |
 | **Power controls** | Graceful shutdown (SSH host script) and Wake-on-LAN; batch actions on Overview |
+| **ECO clock caps** | Cap GPU (`nvidia-smi -lgc`) and CPU (CPPC `max_perf`) clocks per Spark or fleet-wide |
 | **Spark roles** | **Head** / **Worker** / **Standalone** — worker label + head link; standalone can disable LLM monitoring; optional hide workers from Overview and tabs |
 | **Unified memory** | GB10 128 GB LPDDR5X pool (~273 GB/s), GPU/CPU split, bandwidth via `nvidia-smi dmon`. Non-Spark hosts show discrete **VRAM** (nvidia-smi) and system **RAM** separately |
 | **Themes** | Dark, light, cool white, OLED — neutral palettes, persisted in `localStorage` |
@@ -365,6 +366,8 @@ sparkDash/
 | GET | `/api/sparks/:id/llm/daily` | Daily busy decode/prefill tok/s (`port`, `days`) |
 | POST | `/api/sparks/:id/llm/bench` | Start decode benchmark (202); poll/cancel/clear on the same path |
 | POST | `/api/sparks/:id/llm/prefill-bench` | Start prefill + TTFT context sweep (202); poll/cancel/clear on the same path |
+| POST | `/api/sparks/:id/eco` | Set GPU/CPU clock caps: `{ gpu?, cpu? }`, each `"off"` or MHz |
+| POST | `/api/sparks/eco-all` | Same, for every online Spark |
 | GET | `/api/settings` | Global settings |
 | PUT | `/api/settings` | Update global settings |
 | WS | `/ws` | Real-time metrics stream |
@@ -452,6 +455,20 @@ Copy `.env.example` to `.env` if needed:
 - **Wake** / **Wake All** send a UDP magic packet (port 9). The MAC is taken from the **enP7s7** interface automatically while the Spark is online (persisted as `detectedMacAddress`). Optionally set a **MAC override** in Edit Spark. Broadcast is derived as `/24` from LAN IP, or `255.255.255.255` if LAN IP is missing.
 - Batch shutdown only targets **online** Sparks; offline nodes are skipped.
 - Power APIs are mutations: on loopback they follow the local-trust model; a remote bind requires `SPARKDASH_TOKEN`.
+
+### ECO clock caps
+
+- The **ECO** row on each Spark page (and the compact control on Overview for the whole fleet)
+  caps GPU clocks at 2300–1800 MHz and CPU clocks at 2500–1500 MHz. **Off** removes the cap.
+- GPU: `nvidia-smi -lgc 0,<MHz>` / `nvidia-smi -rgc`.
+  CPU: writes `<MHz>000` to every `/sys/devices/system/cpu/cpu*/cpufreq/max_perf`; **Off** copies
+  each core's `cpuinfo_max_freq` back, so the stock per-cluster ceiling returns without a saved
+  snapshot. (`scaling_max_freq` is not used — on GB10 it changes reported clocks only.)
+- Remote units run the commands as `sudo -n sh -c '…'` over SSH, so the SSH user needs passwordless
+  sudo. The local unit runs them in the host mount namespace from the privileged container.
+- The last-applied levels are stored per Spark (`eco` in `sparks.json`) because the GPU cap cannot
+  be read back. A reboot clears both caps on the hardware.
+- Same auth model as the power APIs.
 
 ### Themes
 
