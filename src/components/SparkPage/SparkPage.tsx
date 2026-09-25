@@ -4,6 +4,7 @@ import { isLlmMonitoringEnabled } from "../../api/sparkRole";
 import { updateSpark, refreshSparkMetric, addLlmPort, removeLlmPort } from "../../api/client";
 import { SparkHeader } from "./SparkHeader";
 import { SparkActions } from "./SparkActions";
+import { EcoControl } from "./EcoControl";
 import { GpuPanel } from "./GpuPanel";
 import { RamPanel } from "./RamPanel";
 import { StoragePanel } from "./StoragePanel";
@@ -223,6 +224,7 @@ export function SparkPage({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--density-page-gap)" }}>
       <SparkHeader spark={spark} onEdit={onEdit} />
+      <EcoControl sparks={[spark]} />
       {/* Mobile-only action row (Update Hermes / Shutdown·Wake / Edit) — desktop keeps them in the header. */}
       <SparkActions
         spark={spark}
