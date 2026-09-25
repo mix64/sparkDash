@@ -6,6 +6,7 @@ import { ConfirmShutdownDialog } from "../ConfirmShutdownDialog";
 import { MetricBar } from "../ui/MetricBar";
 import { FleetEnergyCard } from "./FleetEnergyCard";
 import { FleetAlertStrip } from "./FleetAlertStrip";
+import { EcoControl } from "../SparkPage/EcoControl";
 import { ActivityIcon, PowerOffIcon, PowerOnIcon, RotateIcon } from "../ui/icons";
 
 interface OverviewPageProps {
@@ -613,6 +614,7 @@ export function OverviewPage({
           )}
           {sparks.length > 0 && (
             <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <EcoControl sparks={sparks} fleet compact />
               {hermesMonitoredCount > 0 && (
                 <button
                   type="button"
