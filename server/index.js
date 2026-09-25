@@ -21,6 +21,7 @@ import { authorizeUpgrade, configuredToken, createAuthMiddleware, requireRemoteA
 import { inspectHealth } from "./health.js";
 import { getSettings, updateSettings, loadSettings } from "./settings.js";
 import { broadcastForLanIp, effectiveMac, normalizeMac, sendWol } from "./wol.js";
+import { registerEcoRoutes } from "./eco.js";
 import {
   decodeBenchManager,
   DECODE_BENCH_DEFAULTS,
@@ -268,6 +269,13 @@ function startMonitor(spark) {
     },
     // Hermes check / update results must not wait for the next broadcast tick.
     onHermesChange: () => forceBroadcast(),
+    // A reboot clears GPU/CPU clock caps on the hardware; stop showing them.
+    onEcoReboot: (id) => {
+      if (registry.noteEco(id, { gpu: "off", cpu: "off", bootAt: null })) {
+        monitors.get(id)?.updateConfig(registry.getSpark(id));
+        forceBroadcast();
+      }
+    },
     // Worker derived label: resolve a head id to its live LLM model id.
     // Returns null when the head is unknown/offline/model-less so workers
     // never display a stale model. Display-only; never writes to config.
@@ -1607,6 +1615,17 @@ app.post("/api/sparks/:id/wake", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ─── ECO clock caps ──────────────────────────────────────
+registerEcoRoutes(app, {
+  registry,
+  isOnline: (id) => Boolean(monitors.get(id)?.online),
+  bootAt: (id) => monitors.get(id)?.bootAt ?? null,
+  onChange: (id) => {
+    monitors.get(id)?.updateConfig(registry.getSpark(id));
+    forceBroadcast();
+  },
 });
 
 // ─── Static files (built frontend) ───────────────────────
