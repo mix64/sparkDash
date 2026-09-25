@@ -11,6 +11,7 @@ import { TailscaleProbe } from "../collectors/TailscaleProbe.js";
 import { llmDaily } from "../collectors/LlmDaily.js";
 import { HealthEvaluator } from "../health/HealthEvaluator.js";
 import { sshExec } from "../collectors/ssh.js";
+import { ecoClearedByReboot } from "../eco.js";
 import {
   POLL_INTERVAL_STORAGE,
   POLL_INTERVAL_LIVENESS,
@@ -101,7 +102,7 @@ const HEALTH_LABELS = {
 export class SparkMonitor {
   /**
    * @param {object} spark
-   * @param {{ onWolMac?: (sparkId: string, mac: string) => void, onHermesChange?: () => void, resolveHeadModelId?: ((headId: string) => string | null), pollIntervalMs?: number }} [options]
+   * @param {{ onWolMac?: (sparkId: string, mac: string) => void, onHermesChange?: () => void, onEcoReboot?: (sparkId: string) => void, resolveHeadModelId?: ((headId: string) => string | null), pollIntervalMs?: number }} [options]
    *   pollIntervalMs: Settings → Poll interval; drives the fast collector timers.
    */
   constructor(spark, options = {}) {
@@ -120,6 +121,7 @@ export class SparkMonitor {
     this._healthEval = new HealthEvaluator();
     this._health = [];
     this._prevHealthIds = null;
+    this._onEcoReboot = typeof options.onEcoReboot === "function" ? options.onEcoReboot : null;
     // Resolver for worker derived label: maps a head spark id to its live
     // LLM model id (or null when unknown). Wired by index.js from the monitor
     // map; never writes back to registry config (derived display only).
@@ -619,6 +621,13 @@ export class SparkMonitor {
     console.log(`[SparkMonitor] ${this.spark.id} stopped`);
   }
 
+  /** Host boot time (ms since epoch) from the last uptime read, or null. */
+  get bootAt() {
+    return Number.isFinite(this._uptimeSeconds)
+      ? Math.round(Date.now() - this._uptimeSeconds * 1000)
+      : null;
+  }
+
   /** Return a full snapshot of this Spark's metrics. */
   snapshot() {
     const ports = this._llmMonitoringEnabled() ? this._llmPorts() : [];
@@ -638,6 +647,7 @@ export class SparkMonitor {
       disabledDevices: this.spark.disabledDevices || [],
       disabledInterfaces: this.spark.disabledInterfaces || [],
       storagePollDisabled: Boolean(this.spark.storagePollDisabled),
+      eco: { gpu: this.spark.eco?.gpu ?? "off", cpu: this.spark.eco?.cpu ?? "off" },
       workerNode: Boolean(this.spark.workerNode),
       role: this.spark.role || (this.spark.workerNode ? "worker" : "standalone"),
       workerLabel: this.spark.workerLabel || null,
@@ -876,6 +886,9 @@ export class SparkMonitor {
       this.lastOnlineOk = Date.now();
       this._uptimeSeconds = uptimeSeconds;
       this._noteOnline(true);
+      if (this._onEcoReboot && ecoClearedByReboot(this.spark.eco, this.bootAt)) {
+        this._onEcoReboot(this.spark.id);
+      }
     } catch (err) {
       if (!isCurrentRun()) return;
       this._livenessFailures += 1;
