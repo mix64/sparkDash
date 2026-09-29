@@ -18,6 +18,9 @@ const SECRETS_KEY_PATH =
 /** Daily LLM tok/s rollups (gitignored). */
 const LLM_DAILY_JSON_PATH =
   process.env.LLM_DAILY_JSON_PATH || path.join(ROOT, "config", "llm-daily.json");
+/** Cumulative LLM token totals per model (gitignored). */
+const LLM_TOKEN_JSON_PATH =
+  process.env.LLM_TOKEN_JSON_PATH || path.join(ROOT, "config", "llm-token-totals.json");
 /** Rolling fleet energy estimates (gitignored; written atomically at mode 0600). */
 const FLEET_ENERGY_JSON_PATH =
   process.env.FLEET_ENERGY_JSON_PATH || path.join(ROOT, "config", "fleet-energy.json");
@@ -31,11 +34,6 @@ const SSH_CONNECT_TIMEOUT = 5; // seconds
 // for every collector tick. Set SSH_MULTIPLEX=0 to go back to one connection
 // per command (e.g. an sshd with `MaxSessions 1`).
 const SSH_MULTIPLEX = process.env.SSH_MULTIPLEX !== "0";
-// How long an idle master connection lingers, in seconds. Long enough that the
-// slowest loop (Hermes, 10 min) still finds it up would keep a socket open for
-// hours; 5 minutes covers every metric domain and lets a rebooted Spark drop
-// its socket quickly.
-const SSH_CONTROL_PERSIST = process.env.SSH_CONTROL_PERSIST || "300";
 
 // ─── Poll intervals (milliseconds) ───────────────────────
 const POLL_INTERVAL_GPU = parseInt(process.env.POLL_INTERVAL_GPU || "2000", 10);
@@ -109,13 +107,13 @@ export {
   SPARKS_SECRETS_PATH,
   SECRETS_KEY_PATH,
   LLM_DAILY_JSON_PATH,
+  LLM_TOKEN_JSON_PATH,
   FLEET_ENERGY_JSON_PATH,
   LLM_PROBE_TIMEOUT_MS,
   COMFY_PROBE_TIMEOUT_MS,
   TAILSCALE_PROBE_TIMEOUT_MS,
   SSH_CONNECT_TIMEOUT,
   SSH_MULTIPLEX,
-  SSH_CONTROL_PERSIST,
   POLL_INTERVAL_GPU,
   POLL_INTERVAL_CPU,
   POLL_INTERVAL_NETWORK,

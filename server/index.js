@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
-import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -22,6 +21,7 @@ import { inspectHealth } from "./health.js";
 import { getSettings, updateSettings, loadSettings } from "./settings.js";
 import { broadcastForLanIp, effectiveMac, normalizeMac, sendWol } from "./wol.js";
 import { registerEcoRoutes } from "./eco.js";
+import { remoteShutdownCommand, spawnLocalShutdown } from "./shutdown.js";
 import {
   decodeBenchManager,
   DECODE_BENCH_DEFAULTS,
@@ -37,6 +37,11 @@ import { llmProbeHost } from "./collectors/llmHost.js";
 import { onceClose, resolveLlmHttpTarget } from "./collectors/llmTunnel.js";
 import { formatLlmBaseUrl, parseLlmTargetInput } from "../src/shared/llmTarget.js";
 import { llmDaily } from "./collectors/LlmDaily.js";
+import {
+  createLlmTokenRuntime,
+  registerLlmTokenTotalsRoute,
+  llmTokenLedger,
+} from "./llmtokens/LlmTokenRuntime.js";
 import { closeLlmStreamAgent } from "./collectors/LlmStreaming.js";
 import { compareSemver, getLatestRelease } from "./collectors/HermesReleases.js";
 import { FLEET_ENERGY_JSON_PATH } from "./config.js";
@@ -315,6 +320,9 @@ const fleetEnergyRuntime = createFleetEnergyRuntime({
   monitors,
 });
 
+// Cumulative prompt/generated token totals per model (per-UTC-day buckets for range queries).
+const llmTokenRuntime = createLlmTokenRuntime({ ledger: llmTokenLedger, orderedSnapshots });
+
 // ─── Express app ─────────────────────────────────────────
 const app = express();
 const server = createServer(app);
@@ -332,6 +340,7 @@ function clientKey(req) {
 
 // ─── REST API ────────────────────────────────────────────
 registerFleetEnergyRoute(app, fleetEnergyTracker);
+registerLlmTokenTotalsRoute(app, llmTokenLedger);
 
 // Never return SSH passwords in any response
 app.get("/api/sparks", (_req, res) => {
@@ -1418,22 +1427,14 @@ app.delete("/api/sparks/:id/llm/showcase/:sessionId", (req, res) => {
 });
 
 // ─── Power management ────────────────────────────────────
-// Shutdown uses host script: sudo -n /usr/local/bin/spark-shutdown (passwordless).
+// Shutdown uses the host script /usr/local/bin/spark-shutdown (see server/shutdown.js
+// for the local host-namespace drop and the remote command string).
 // These routes are unauthenticated like the rest of the LAN dashboard — do not
 // expose port 5555 beyond a trusted network.
 
-const SHUTDOWN_BIN = "/usr/local/bin/spark-shutdown";
-/**
- * Remote: verify script + passwordless sudo, then background shutdown so SSH
- * returns before the host dies. Failures before backgrounding surface to the UI.
- */
-const SHUTDOWN_REMOTE_CMD = [
-  `test -x ${SHUTDOWN_BIN} || { echo "missing ${SHUTDOWN_BIN}" >&2; exit 127; }`,
-  `sudo -n true || { echo "sudo -n required for ${SHUTDOWN_BIN}" >&2; exit 126; }`,
-  `nohup sudo -n ${SHUTDOWN_BIN} >/dev/null 2>&1 &`,
-  `sleep 0.3`,
-  `exit 0`,
-].join("; ");
+/** Remote: verify script + passwordless sudo, then background shutdown so SSH
+ * returns before the host dies. Failures before backgrounding surface to the UI. */
+const SHUTDOWN_REMOTE_CMD = remoteShutdownCommand();
 
 function shutdownErrorStatus(msg) {
   if (/timed out|connection refused|unreachable|no route|ECONNREFUSED|ETIMEDOUT/i.test(msg)) {
@@ -1459,26 +1460,7 @@ function isBenignShutdownSshError(msg) {
  */
 function initiateSparkShutdown(spark) {
   if (spark.isLocal) {
-    return new Promise((resolve, reject) => {
-      try {
-        const child = spawn("sudo", ["-n", SHUTDOWN_BIN], {
-          detached: true,
-          stdio: "ignore",
-        });
-        child.on("error", (err) => {
-          const msg = err.message || String(err);
-          if (/ENOENT|not found/i.test(msg)) {
-            reject(new Error(`${SHUTDOWN_BIN} not found on this host`));
-          } else {
-            reject(new Error(msg));
-          }
-        });
-        child.unref();
-        resolve("Shutdown initiated");
-      } catch (err) {
-        reject(err);
-      }
-    });
+    return spawnLocalShutdown();
   }
 
   return sshExec(spark, SHUTDOWN_REMOTE_CMD, { timeoutMs: 8000 })
@@ -1753,6 +1735,7 @@ if (!startupPreflight.fatal) {
     }
     startAllMonitors();
     fleetEnergyRuntime.start();
+    llmTokenRuntime.start();
   });
 } else {
   process.exitCode = 1;
@@ -1781,6 +1764,7 @@ async function shutdown(signal) {
   } catch (err) {
     console.error("[sparkDash] failed to flush LLM daily history:", err.message);
   }
+  llmTokenRuntime.stop();
   const energyPersistenceSucceeded = fleetEnergyRuntime.stop();
   const streamAgentClosedGracefully = await closeLlmStreamAgent();
   if (!streamAgentClosedGracefully) {
