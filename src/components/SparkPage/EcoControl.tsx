@@ -75,6 +75,7 @@ export function EcoControl({ sparks, fleet = false, compact = false }: EcoContro
           disabled={busy}
           aria-label={`${label} clock cap`}
           title={`${label} clock cap`}
+          style={{ width: "auto" }}
           className={`rounded border border-border bg-surface-elevated text-[11px] text-text outline-none focus:border-accent disabled:opacity-50 ${compact ? "px-1 py-1" : "px-2.5 py-1.5"}`}
         >
           <option value="" disabled>{label}: mixed</option>
