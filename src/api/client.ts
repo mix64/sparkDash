@@ -642,7 +642,6 @@ export function setSparkEco(id: string, levels: Partial<EcoState>): Promise<Powe
 export function setFleetEco(levels: Partial<EcoState>): Promise<BatchPowerResult> {
   return apiFetch("/api/sparks/eco-all", { method: "POST", body: JSON.stringify(levels) });
 }
-}
 
 // ─── Hermes update preview ───────────────────────────────
 /** Per-Spark update preview (release + pending commits + resolved view). */
