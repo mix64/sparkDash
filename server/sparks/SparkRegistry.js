@@ -116,7 +116,7 @@ export class SparkRegistry {
    * Persist the last-applied ECO clock levels. Only the ECO route calls this,
    * after the hardware accepted the change. No-op if unchanged.
    * @param {string} id
-   * @param {{gpu?: string, cpu?: string, bootAt?: number | null}} levels
+   * @param {{cpu?: string, bootAt?: number | null}} levels
    */
   noteEco(id, levels) {
     const idx = this._sparks.findIndex((s) => s.id === id);
@@ -693,7 +693,7 @@ export class SparkRegistry {
       disabledDevices: Array.isArray(config.disabledDevices) ? config.disabledDevices : [],
       disabledInterfaces: Array.isArray(config.disabledInterfaces) ? config.disabledInterfaces : [],
       storagePollDisabled: Boolean(config.storagePollDisabled),
-      /** Last-applied GPU/CPU clock caps ("off" or MHz). */
+      /** Last-applied CPU clock cap ("off" or MHz). GPU caps use the gpu-clock marker. */
       eco: normalizeEco(config.eco),
     };
   }

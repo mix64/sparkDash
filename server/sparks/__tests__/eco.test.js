@@ -36,40 +36,41 @@ function fakeApp() {
   };
 }
 
-test("ecoScript: GPU lock/reset and CPU cap/stock restore", () => {
-  assert.equal(ecoScript("gpu", "2000"), "nvidia-smi -lgc 0,2000");
-  assert.equal(ecoScript("gpu", "off"), "nvidia-smi -rgc");
+test("ecoScript: CPU cap/stock restore, and GPU is not an ECO script", () => {
   assert.match(ecoScript("cpu", "1750"), /echo 1750000 > "\$d\/max_perf"/);
   assert.match(ecoScript("cpu", "off"), /cat "\$d\/cpuinfo_max_freq" > "\$d\/max_perf"/);
-  assert.throws(() => ecoScript("gpu", "9999"));
+  assert.throws(() => ecoScript("gpu", "2000"));
   assert.throws(() => ecoScript("cpu", "2000; reboot"));
 });
 
-test("normalizeEco and parseEcoBody reject unknown levels", () => {
-  assert.deepEqual(normalizeEco(undefined), { gpu: "off", cpu: "off" });
-  assert.deepEqual(normalizeEco({ gpu: "2200", cpu: "42" }), { gpu: "2200", cpu: "off" });
+test("normalizeEco and parseEcoBody reject unknown levels and a GPU cap", () => {
+  assert.deepEqual(normalizeEco(undefined), { cpu: "off" });
+  assert.deepEqual(normalizeEco({ gpu: "2200", cpu: "42" }), { cpu: "off" });
   assert.deepEqual(parseEcoBody({ cpu: "2000" }), { levels: { cpu: "2000" } });
   assert.ok(parseEcoBody({}).error);
-  assert.ok(parseEcoBody({ gpu: 2000 }).error);
+  assert.match(parseEcoBody({ gpu: "2000" }).error, /gpu-clock/);
+  assert.match(parseEcoBody({ gpu: 2000 }).error, /gpu-clock/);
 });
 
-test("applyEco keeps the channel that succeeded when the other fails", async () => {
-  const run = async (_spark, script) => {
-    if (script.startsWith("nvidia-smi")) throw new Error("sudo: a password is required");
-  };
-  const out = await applyEco({ id: "a" }, { gpu: "2000", cpu: "2000" }, run);
+test("applyEco applies the CPU cap and ignores a GPU key", async () => {
+  const scripts = [];
+  const out = await applyEco({ id: "a" }, { gpu: "2000", cpu: "2000" }, async (_spark, script) => {
+    scripts.push(script);
+  });
   assert.deepEqual(out.applied, { cpu: "2000" });
-  assert.deepEqual(out.errors, ["GPU: sudo: a password is required"]);
+  assert.deepEqual(out.errors, []);
+  assert.equal(scripts.length, 1);
+  assert.match(scripts[0], /max_perf/);
 });
 
 test("registry: eco persists via noteEco only, never via PATCH", () => {
   const r = freshRegistry();
-  assert.deepEqual(r.getSpark("a").eco, { gpu: "off", cpu: "off" });
-  r.updateSpark("a", { eco: { gpu: "1800" } });
-  assert.deepEqual(r.getSpark("a").eco, { gpu: "off", cpu: "off" });
-  assert.ok(r.noteEco("a", { gpu: "1800" }));
-  assert.equal(r.noteEco("a", { gpu: "1800" }), null);
-  assert.deepEqual(new SparkRegistry().getSpark("a").eco, { gpu: "1800", cpu: "off" });
+  assert.deepEqual(r.getSpark("a").eco, { cpu: "off" });
+  r.updateSpark("a", { eco: { cpu: "1750" } });
+  assert.deepEqual(r.getSpark("a").eco, { cpu: "off" });
+  assert.ok(r.noteEco("a", { cpu: "1750" }));
+  assert.equal(r.noteEco("a", { cpu: "1750" }), null);
+  assert.deepEqual(new SparkRegistry().getSpark("a").eco, { cpu: "1750" });
 });
 
 test("routes: single Spark applies and records; fleet skips offline units", async () => {
@@ -85,9 +86,9 @@ test("routes: single Spark applies and records; fleet skips offline units", asyn
     run: async (spark, script) => { scripts.push([spark.id, script]); },
   });
 
-  const one = await app.call("/api/sparks/:id/eco", { id: "b" }, { gpu: "2200" });
+  const one = await app.call("/api/sparks/:id/eco", { id: "b" }, { cpu: "2250" });
   assert.equal(one.statusCode, 200);
-  assert.equal(r.getSpark("b").eco.gpu, "2200");
+  assert.equal(r.getSpark("b").eco.cpu, "2250");
 
   const fleet = await app.call("/api/sparks/eco-all", {}, { cpu: "1500" });
   assert.deepEqual(fleet.body.results, [
@@ -97,8 +98,12 @@ test("routes: single Spark applies and records; fleet skips offline units", asyn
   assert.deepEqual(scripts.map(([id]) => id), ["b", "a"]);
   assert.deepEqual(changed, ["b", "a"]);
 
-  assert.equal((await app.call("/api/sparks/:id/eco", { id: "zz" }, { gpu: "off" })).statusCode, 404);
-  assert.equal((await app.call("/api/sparks/:id/eco", { id: "a" }, { gpu: "1" })).statusCode, 400);
+  assert.equal((await app.call("/api/sparks/:id/eco", { id: "zz" }, { cpu: "off" })).statusCode, 404);
+  assert.equal((await app.call("/api/sparks/:id/eco", { id: "a" }, { cpu: "1" })).statusCode, 400);
+  const gpu = await app.call("/api/sparks/:id/eco", { id: "a" }, { gpu: "2000" });
+  assert.equal(gpu.statusCode, 400);
+  assert.match(gpu.body.error, /gpu-clock/);
+  assert.equal(r.getSpark("a").eco.cpu, "1500");
 });
 
 test("routes: a failed command returns 500 and leaves the saved level alone", async () => {
@@ -114,14 +119,15 @@ test("routes: a failed command returns 500 and leaves the saved level alone", as
   assert.equal(r.getSpark("a").eco.cpu, "off");
 });
 
-test("ecoClearedByReboot: only a recorded cap on a different boot counts", async () => {
+test("ecoClearedByReboot: only a recorded CPU cap on a different boot counts", async () => {
   const { ecoClearedByReboot } = await import("../../eco.js");
   const boot = 1_700_000_000_000;
-  assert.equal(ecoClearedByReboot({ gpu: "2000", cpu: "off", bootAt: boot }, boot + 5_000), false);
-  assert.equal(ecoClearedByReboot({ gpu: "2000", cpu: "off", bootAt: boot }, boot + 3_600_000), true);
-  assert.equal(ecoClearedByReboot({ gpu: "off", cpu: "off", bootAt: boot }, boot + 3_600_000), false);
-  assert.equal(ecoClearedByReboot({ gpu: "2000", cpu: "off" }, boot), false);
-  assert.equal(ecoClearedByReboot({ gpu: "2000", cpu: "off", bootAt: boot }, null), false);
+  assert.equal(ecoClearedByReboot({ cpu: "2000", bootAt: boot }, boot + 5_000), false);
+  assert.equal(ecoClearedByReboot({ cpu: "2000", bootAt: boot }, boot + 3_600_000), true);
+  assert.equal(ecoClearedByReboot({ gpu: "2000", cpu: "off", bootAt: boot }, boot + 3_600_000), false);
+  assert.equal(ecoClearedByReboot({ cpu: "off", bootAt: boot }, boot + 3_600_000), false);
+  assert.equal(ecoClearedByReboot({ cpu: "2000" }, boot), false);
+  assert.equal(ecoClearedByReboot({ cpu: "2000", bootAt: boot }, null), false);
 });
 
 test("routes record the boot time; a reset drops it", async () => {
@@ -131,7 +137,7 @@ test("routes record the boot time; a reset drops it", async () => {
     registry: r, isOnline: () => true, bootAt: () => 1234, onChange: () => {}, run: async () => {},
   });
   await app.call("/api/sparks/:id/eco", { id: "a" }, { cpu: "2000" });
-  assert.deepEqual(r.getSpark("a").eco, { gpu: "off", cpu: "2000", bootAt: 1234 });
-  r.noteEco("a", { gpu: "off", cpu: "off", bootAt: null });
-  assert.deepEqual(r.getSpark("a").eco, { gpu: "off", cpu: "off" });
+  assert.deepEqual(r.getSpark("a").eco, { cpu: "2000", bootAt: 1234 });
+  r.noteEco("a", { cpu: "off", bootAt: null });
+  assert.deepEqual(r.getSpark("a").eco, { cpu: "off" });
 });

@@ -673,7 +673,7 @@ export class SparkMonitor {
       disabledDevices: this.spark.disabledDevices || [],
       disabledInterfaces: this.spark.disabledInterfaces || [],
       storagePollDisabled: Boolean(this.spark.storagePollDisabled),
-      eco: { gpu: this.spark.eco?.gpu ?? "off", cpu: this.spark.eco?.cpu ?? "off" },
+      eco: { cpu: this.spark.eco?.cpu ?? "off" },
       workerNode: Boolean(this.spark.workerNode),
       role: this.spark.role || (this.spark.workerNode ? "worker" : "standalone"),
       workerLabel: this.spark.workerLabel || null,

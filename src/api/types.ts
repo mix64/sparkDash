@@ -645,9 +645,8 @@ export interface SparkMetrics {
 }
 
 // ─── Spark snapshot (server pushes this) ──────────────────
-/** ECO clock cap per channel: "off" or a MHz value from ECO_LEVELS. */
+/** ECO CPU clock cap: "off" or a MHz value from ECO_LEVELS. GPU caps are gpu.throttle.clockCapMHz. */
 export interface EcoState {
-  gpu: string;
   cpu: string;
 }
 
@@ -671,7 +670,7 @@ export interface SparkSnapshot {
   disabledDevices: string[];
   disabledInterfaces: string[];
   storagePollDisabled?: boolean;
-  /** Last-applied ECO clock caps; cleared by the hardware on reboot. */
+  /** Last-applied ECO CPU clock cap; cleared by the hardware on reboot. */
   eco?: EcoState;
   /** Cluster role (head / worker / standalone) */
   role?: SparkRole;

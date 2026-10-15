@@ -1,6 +1,11 @@
 /**
- * ECO clock caps — lower the GPU (`nvidia-smi -lgc`) and CPU (CPPC `max_perf`)
- * ceilings on a Spark to trade peak speed for heat and power.
+ * ECO clock caps — lower the CPU ceiling (CPPC `max_perf`) on a Spark to trade
+ * peak speed for heat and power.
+ *
+ * GPU clocks are not set here. Upstream's GPU clock cap
+ * (`PUT /api/sparks/:id/gpu-clock`, Edit unit) already owns `nvidia-smi -lgc`,
+ * the boot service, and the marker the dashboard displays. A second writer
+ * would fight that lock and its "keep after reboot" service.
  *
  * Writes go through the dashboard's normal auth (mutating routes need
  * SPARKDASH_TOKEN when one is configured), like shutdown / wake.
@@ -10,9 +15,9 @@
  * (2808000 / 3900000) while capped, so no snapshot of the stock values is kept.
  * `scaling_max_freq` is not used: on GB10 it follows the cap in reporting only.
  *
- * The GPU cap cannot be read back from nvidia-smi, so the registry keeps the
- * last-applied levels (`spark.eco`) and the snapshot shows those. Both caps are
- * cleared by a reboot.
+ * The cap cannot be read back from sysfs once applied (max_perf is the cap),
+ * so the registry keeps the last-applied level (`spark.eco`) and the snapshot
+ * shows it. A reboot clears the cap on the hardware.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -21,7 +26,7 @@ import { HOST_PATHS } from "./config.js";
 import { sshExec } from "./collectors/ssh.js";
 import { isEcoLevel } from "../src/shared/ecoLevels.js";
 
-const CHANNELS = /** @type {const} */ (["gpu", "cpu"]);
+const CHANNELS = /** @type {const} */ (["cpu"]);
 const TIMEOUT_MS = 8000;
 const CPUFREQ_DIRS = "/sys/devices/system/cpu/cpu[0-9]*/cpufreq";
 
@@ -29,8 +34,9 @@ const CPUFREQ_DIRS = "/sys/devices/system/cpu/cpu[0-9]*/cpufreq";
 const REBOOT_TOLERANCE_MS = 60_000;
 
 /**
- * Persisted shape: both channels always present, unknown values → "off".
- * `bootAt` is the host boot time (ms) when the caps were applied.
+ * Persisted shape: cpu always present, unknown values → "off". A leftover
+ * `gpu` from older forks is dropped — GPU caps live on the gpu-clock marker.
+ * `bootAt` is the host boot time (ms) when the cap was applied.
  */
 export function normalizeEco(eco) {
   const out = Object.fromEntries(
@@ -40,19 +46,16 @@ export function normalizeEco(eco) {
   return out;
 }
 
-/** True when a cap is recorded but the host has rebooted since, clearing it. */
+/** True when a CPU cap is recorded but the host has rebooted since, clearing it. */
 export function ecoClearedByReboot(eco, bootAt) {
-  if (!eco || (eco.gpu === "off" && eco.cpu === "off")) return false;
+  if (!eco || eco.cpu === "off") return false;
   if (!Number.isFinite(eco.bootAt) || !Number.isFinite(bootAt)) return false;
   return Math.abs(bootAt - eco.bootAt) > REBOOT_TOLERANCE_MS;
 }
 
-/** Shell script that applies one channel's level. */
+/** Shell script that applies the CPU cap. GPU locks are the gpu-clock API. */
 export function ecoScript(channel, level) {
   if (!isEcoLevel(channel, level)) throw new Error(`Invalid ${channel} ECO level`);
-  if (channel === "gpu") {
-    return level === "off" ? "nvidia-smi -rgc" : `nvidia-smi -lgc 0,${level}`;
-  }
   const write = level === "off"
     ? `cat "$d/cpuinfo_max_freq" > "$d/max_perf"`
     : `echo ${Number(level) * 1000} > "$d/max_perf"`;
@@ -102,8 +105,11 @@ export async function applyEco(spark, levels, run = runAsRoot) {
   return { applied, errors };
 }
 
-/** Pick the requested channels from a request body, or return an error text. */
+/** Pick the requested CPU level from a request body, or return an error text. */
 export function parseEcoBody(body) {
+  if (body?.gpu !== undefined) {
+    return { error: "GPU clock caps use PUT /api/sparks/:id/gpu-clock" };
+  }
   const levels = {};
   for (const ch of CHANNELS) {
     const value = body?.[ch];
@@ -111,12 +117,12 @@ export function parseEcoBody(body) {
     if (!isEcoLevel(ch, value)) return { error: `Invalid ${ch.toUpperCase()} ECO level` };
     levels[ch] = value;
   }
-  if (!Object.keys(levels).length) return { error: "Specify gpu and/or cpu" };
+  if (!Object.keys(levels).length) return { error: "Specify cpu" };
   return { levels };
 }
 
 /**
- * POST /api/sparks/:id/eco and /api/sparks/eco-all with body {gpu?, cpu?}.
+ * POST /api/sparks/:id/eco and /api/sparks/eco-all with body {cpu}.
  * @param {import("express").Express} app
  * @param {{registry: any, isOnline: (id: string) => boolean,
  *   bootAt: (id: string) => number | null,

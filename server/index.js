@@ -449,9 +449,9 @@ function startMonitor(spark) {
     // Hermes check / update results must not wait for the next broadcast tick.
     onHermesChange: () => forceBroadcast(),
     onEvent: recordEvent,
-    // A reboot clears GPU/CPU clock caps on the hardware; stop showing them.
+    // A reboot clears the CPU clock cap on the hardware; stop showing it.
     onEcoReboot: (id) => {
-      if (registry.noteEco(id, { gpu: "off", cpu: "off", bootAt: null })) {
+      if (registry.noteEco(id, { cpu: "off", bootAt: null })) {
         monitors.get(id)?.updateConfig(registry.getSpark(id));
         forceBroadcast();
       }

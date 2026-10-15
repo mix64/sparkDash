@@ -142,7 +142,7 @@ Full history: [CHANGELOG.md](./CHANGELOG.md)
 | **Multi-GPU hosts** | A dedicated GPU host with several NVIDIA cards reports each one: the header names every card, the GPU panel adds a block per card (throttle chip, usage and temperature sparklines, power, VRAM bar) and the API exposes `gpu.gpus[]`. The headline `gpu` numbers stay an aggregate of all cards, so Overview cards and alerts need no change |
 | **Spark uptime** | System uptime displayed inline on each Spark header for at-a-glance availability |
 | **Power controls** | Graceful shutdown (SSH host script). Wake-on-LAN is for dedicated GPU hosts whose NIC supports it. DGX Spark does not wake from a magic packet |
-| **ECO clock caps** | Cap GPU (`nvidia-smi -lgc`) and CPU (CPPC `max_perf`) clocks per Spark or fleet-wide |
+| **ECO clock caps** | Cap CPU clocks (CPPC `max_perf`) per Spark or fleet-wide. GPU clocks are the separate [GPU clock cap](#gpu-clock-cap) |
 | **Spark roles** | **Head** / **Worker** / **Standalone** — worker label + head link; standalone can disable LLM monitoring; optional hide workers from Overview and tabs |
 | **Unified memory** | GB10 128 GB LPDDR5X pool (~273 GB/s), GPU/CPU split, bandwidth via `nvidia-smi dmon`. Non-Spark hosts show discrete **VRAM** (nvidia-smi) and system **RAM** separately |
 | **Health findings** | Small explainable rules over metrics already collected: GPU running hot (85 / 90 °C), GPU stuck in a low-power state, unified memory low (under 3 GB warns, under 1.5 GB critical), NVIDIA **Xid** errors and kernel **OOM kills**, several models loaded while memory is busy, a link slower than 1 Gb/s, and RoCE link / loss. Shown as chips on the cards and in full on the unit page; changes are logged to **Activity** |
@@ -680,7 +680,7 @@ sparkDash only needs the engine's HTTP port; it does not care how the engine was
 
 ### Set it from the dashboard
 
-**Edit unit → GPU clock cap** (Spark units on Linux only; hosts, Windows and Macs do not show it) caps the graphics clock with `nvidia-smi -lgc 0,MAX`, the same thing the standalone [sparkLimiter](https://github.com/MiaAI-Lab/sparkLimiter) script does. It shows the cap in effect and the GPU maximum, and has:
+**Edit unit → GPU clock cap** (Spark units on Linux only; hosts, Windows and Macs do not show it) caps the graphics clock with `nvidia-smi -lgc 0,MAX`, the same thing the standalone [sparkLimiter](https://github.com/MiaAI-Lab/sparkLimiter) script does. This is the only GPU clock control: the Spark page ECO row caps CPU clocks and does not call `nvidia-smi`. It shows the cap in effect and the GPU maximum, and has:
 
 - **Apply** — caps the clock now (300 MHz up to the GPU maximum). It is lost at the next reboot unless the option below is on.
 - **Keep after reboot** — installs `spark-gpu-clock-limit.service` (a oneshot unit that re-applies the cap at boot; the same name sparkLimiter uses, so the two manage one unit). Switching it off removes the unit.
@@ -893,8 +893,8 @@ sparkDash/
 | POST | `/api/sparks/:id/llm/bench` | Start decode benchmark (202); poll/cancel/clear on the same path |
 | POST | `/api/sparks/:id/llm/prefill-bench` | Start prefill + TTFT context sweep (202); poll/cancel/clear on the same path |
 | POST | `/api/sparks/:id/llm/quality-bench` | Start quality suite (202); `GET` lists active / last / history summaries, `GET :benchId` returns a full run, `DELETE :benchId` cancels, `DELETE` clears history |
-| POST | `/api/sparks/:id/eco` | Set GPU/CPU clock caps: `{ gpu?, cpu? }`, each `"off"` or MHz |
-| POST | `/api/sparks/eco-all` | Same, for every online Spark |
+| POST | `/api/sparks/:id/eco` | Set the CPU clock cap: `{ cpu }`, `"off"` or MHz. GPU caps use `/gpu-clock` |
+| POST | `/api/sparks/eco-all` | Same CPU cap, for every online Spark |
 | GET | `/metrics` | Prometheus exposition (opt-in, see [Prometheus](#prometheus)) |
 | GET | `/api/alerts` · `/api/alerts/config` | Firing, pending and recent alerts; rules and channels (URLs masked) — see [Alert notifications](#alert-notifications) |
 | PUT/POST | `/api/alerts/config` · `/api/alerts/test` | Save rules and channels; send a test message (both `409` while notifications are off) |
@@ -1067,15 +1067,15 @@ units do not display stale discovered models.
 ### ECO clock caps
 
 - The **ECO** row on each Spark page (and the compact control on Overview for the whole fleet)
-  caps GPU clocks at 2300–1800 MHz and CPU clocks at 2500–1500 MHz. **Off** removes the cap.
-- GPU: `nvidia-smi -lgc 0,<MHz>` / `nvidia-smi -rgc`.
-  CPU: writes `<MHz>000` to every `/sys/devices/system/cpu/cpu*/cpufreq/max_perf`; **Off** copies
+  caps CPU clocks at 2500–1500 MHz. **Off** removes the cap. GPU clocks are
+  [GPU clock cap](#gpu-clock-cap) only, so the two do not both drive `nvidia-smi -lgc`.
+- CPU: writes `<MHz>000` to every `/sys/devices/system/cpu/cpu*/cpufreq/max_perf`; **Off** copies
   each core's `cpuinfo_max_freq` back, so the stock per-cluster ceiling returns without a saved
   snapshot. (`scaling_max_freq` is not used — on GB10 it changes reported clocks only.)
 - Remote units run the commands as `sudo -n sh -c '…'` over SSH, so the SSH user needs passwordless
   sudo. The local unit runs them in the host mount namespace from the privileged container.
-- The last-applied levels are stored per Spark (`eco` in `sparks.json`) because the GPU cap cannot
-  be read back. A reboot clears both caps on the hardware.
+- The last-applied CPU level is stored per Spark (`eco` in `sparks.json`). A reboot clears the cap
+  on the hardware. A request that includes `gpu` is rejected.
 - Same auth model as the power APIs.
 
 ### Themes

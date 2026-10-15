@@ -1,4 +1,4 @@
-export type EcoChannel = "gpu" | "cpu";
+export type EcoChannel = "cpu";
 
 export const ECO_LEVELS: Readonly<Record<EcoChannel, readonly string[]>>;
 

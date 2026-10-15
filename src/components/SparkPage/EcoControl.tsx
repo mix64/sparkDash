@@ -5,7 +5,6 @@ import { ECO_LEVELS, type EcoChannel } from "../../shared/ecoLevels.js";
 import { BoltIcon } from "../ui/icons";
 
 const CHANNELS: { key: EcoChannel; label: string; offLabel: string }[] = [
-  { key: "gpu", label: "GPU", offLabel: "Off (uncap)" },
   { key: "cpu", label: "CPU", offLabel: "Off (stock)" },
 ];
 
@@ -23,8 +22,10 @@ function currentLevel(sparks: SparkSnapshot[], channel: EcoChannel): string {
 }
 
 /**
- * GPU/CPU clock caps. The applied levels arrive with the snapshot, so the
- * selects only hold a local draft until Apply succeeds.
+ * CPU clock cap. GPU clocks are the Edit unit GPU clock cap, which also owns
+ * the boot service — a second control here would fight that lock.
+ * The applied level arrives with the snapshot, so the select only holds a
+ * local draft until Apply succeeds.
  */
 export function EcoControl({ sparks, fleet = false, compact = false }: EcoControlProps) {
   const [draft, setDraft] = useState<Partial<EcoState>>({});
