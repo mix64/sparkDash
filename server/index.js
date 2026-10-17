@@ -34,6 +34,8 @@ import { broadcastForLanIp, effectiveMac, normalizeMac, sendWol } from "./wol.js
 import { remoteShutdownCommand, spawnLocalShutdown } from "./shutdown.js";
 import { GpuClockManager } from "./gpuclock/GpuClockManager.js";
 import { registerGpuClockFleetRoute, registerGpuClockRoutes } from "./gpuclock/routes.js";
+import { CpuClockManager } from "./cpuclock/CpuClockManager.js";
+import { registerCpuClockRoutes } from "./cpuclock/routes.js";
 import {
   backendForPort,
   decodeBenchManager,
@@ -2229,6 +2231,16 @@ registerGpuClockFleetRoute(app, {
 // remote one uses `sudo -n` as its SSH user. Same auth and limiters as power actions.
 registerGpuClockRoutes(app, {
   manager: gpuClockManager,
+  registry,
+  recordEvent,
+  allowRead: (req) => allowTest(principalKey(req)),
+  allowChange: (req) => allowDestructive(principalKey(req)) && allowGlobalDestructive(clientKey(req)),
+  rejectLimited,
+});
+
+// CPU clock cap (CPPC max_perf on every core), same privilege model and limiters as the GPU cap.
+registerCpuClockRoutes(app, {
+  manager: new CpuClockManager(),
   registry,
   recordEvent,
   allowRead: (req) => allowTest(principalKey(req)),
