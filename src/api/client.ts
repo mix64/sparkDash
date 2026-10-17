@@ -16,6 +16,7 @@ import type {
   HealthResponse,
   InferenceActivity,
   HermesBatchUpdateResponse,
+  CpuClockStatus,
   GpuClockStatus,
   FleetGpuClockResult,
   HermesUpdatesResponse,
@@ -651,6 +652,43 @@ export function resetFleetGpuClock(): Promise<{ success: boolean; applied: numbe
   return apiFetch("/api/sparks/gpu-clock-all", {
     method: "POST",
     body: JSON.stringify({ reset: true }),
+  });
+}
+
+// ─── CPU clock cap (Spark units) ─────────────────────────
+export function fetchCpuClock(id: string): Promise<CpuClockStatus> {
+  return apiFetch(`/api/sparks/${encodeURIComponent(id)}/cpu-clock`);
+}
+
+/** Command to paste into a terminal on the unit itself: asks for the sudo password there. */
+export function fetchCpuClockCommand(
+  id: string,
+  q: { action: "apply"; maxMHz: number; persist: boolean } | { action: "reset" }
+): Promise<{ command: string }> {
+  const params = new URLSearchParams({ action: q.action });
+  if (q.action === "apply") {
+    params.set("maxMHz", String(q.maxMHz));
+    params.set("persist", q.persist ? "1" : "0");
+  }
+  return apiFetch(`/api/sparks/${encodeURIComponent(id)}/cpu-clock/command?${params}`);
+}
+
+/** Cap every core's clock now; `persist` also installs the boot service. */
+export function setCpuClock(
+  id: string,
+  body: { maxMHz: number; persist: boolean; sudoPassword?: string }
+): Promise<{ success: boolean; capMHz: number; persist: boolean }> {
+  return apiFetch(`/api/sparks/${encodeURIComponent(id)}/cpu-clock`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Remove the cap and the boot service. */
+export function resetCpuClock(id: string, sudoPassword?: string): Promise<{ success: boolean }> {
+  return apiFetch(`/api/sparks/${encodeURIComponent(id)}/cpu-clock`, {
+    method: "DELETE",
+    ...(sudoPassword ? { body: JSON.stringify({ sudoPassword }) } : {}),
   });
 }
 

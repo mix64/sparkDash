@@ -248,6 +248,30 @@ export type FleetGpuClockResult =
   | { id: string; ok: true; supported: false; reason: string }
   | { id: string; ok: false; error: string };
 
+/** GET /api/sparks/:id/cpu-clock: the CPU clock cap (CPPC `max_perf` on every core) and its boot service. */
+export type CpuClockStatus =
+  | { supported: false; reason?: string }
+  | {
+      supported: true;
+      /** Highest stock core ceiling (MHz). */
+      hwMaxMHz: number | null;
+      /** Highest core floor (MHz). */
+      hwMinMHz: number | null;
+      /** Cap in effect right now, read back from max_perf (MHz); null when uncapped. */
+      capMHz: number | null;
+      /** The server accepts a typed sudo password on this connection (https or the machine itself). */
+      passwordAllowed?: boolean;
+      /** "root" runs directly, "yes" = passwordless sudo works, "no" = it does not. */
+      sudo: "root" | "yes" | "no";
+      service: {
+        installed: boolean;
+        /** Cap the service applies at boot (MHz). */
+        capMHz: number | null;
+        enabled: string | null;
+        active: string | null;
+      };
+    };
+
 /** One health finding for a Spark (server rules in server/health/HealthEvaluator.js). */
 export interface HealthFinding {
   id: "thermal" | "low-power" | "memory" | "xid" | "oom" | "concurrency" | "link-speed" | "roce-link" | "roce-loss";
