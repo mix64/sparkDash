@@ -22,6 +22,7 @@ import { Tag } from "./ui/Tag";
 import { TestResultList } from "./TestResultList";
 import { GpuClockSection } from "./GpuClockSection";
 import { GpuPowerSection } from "./GpuPowerSection";
+import { CpuClockSection } from "./CpuClockSection";
 import { XIcon } from "./ui/icons";
 import { MacAgentFields } from "./MacAgentFields";
 import "../styles/dialogs.css";
@@ -781,7 +782,10 @@ export function EditSparkDialog({
               )}
 
               {sparkId && config.kind !== "host" && config.platform !== "windows" && config.platform !== "darwin" && (
-                <GpuClockSection sparkId={sparkId} />
+                <>
+                  <GpuClockSection sparkId={sparkId} />
+                  <CpuClockSection sparkId={sparkId} />
+                </>
               )}
               {sparkId && config.kind === "host" && config.platform !== "windows" && config.platform !== "darwin" && (
                 <GpuPowerSection sparkId={sparkId} />
