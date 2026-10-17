@@ -15,6 +15,9 @@ vi.mock("../api/client", () => ({
   fetchGpuClock: vi.fn(() => Promise.resolve({ supported: false, reason: "test" })),
   setGpuClock: vi.fn(),
   resetGpuClock: vi.fn(),
+  fetchCpuClock: vi.fn(() => Promise.resolve({ supported: false, reason: "test" })),
+  setCpuClock: vi.fn(),
+  resetCpuClock: vi.fn(),
 }));
 
 const spark: SparkConfig = {
