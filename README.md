@@ -922,6 +922,17 @@ The marker is read from `/run/sparkdash/gpu-clock-cap` (for a root-run unit)
 or `~/.config/sparkdash/gpu-clock-cap` of the SSH user. The optional boot_id
 makes a stale marker disappear after a reboot, when the lock is gone too.
 
+## CPU clock cap
+
+**Edit unit → CPU clock cap** sits under the GPU clock cap, on the same units, and works the same way: **Apply**, **Keep after reboot**, **Remove limit**, the sudo password field when the unit has no passwordless sudo, and *Run it on the Spark yourself*. Same privilege model, password rules, rollback and rate limits as the GPU cap.
+
+- **Apply** writes `<MHz>000` to every core's clock limit under `/sys/devices/system/cpu/cpu*/cpufreq/` (`cppc_cpufreq`): CPPC `max_perf` where the kernel has it (NVIDIA kernels up to 6.17), otherwise `scaling_max_freq` (7.0). Edit unit names the file the unit uses. A core whose stock ceiling (`cpuinfo_max_freq`) is lower keeps its ceiling, so on GB10 a 3000 MHz cap only slows the 3.9 GHz cluster. The cap must be from 1000 MHz up to the highest core ceiling: lower makes the box hard to even log in to, and a kept cap comes back at every boot.
+- **Keep after reboot** installs `spark-cpu-clock-limit.service`, a oneshot unit whose `ExecStart` writes the cap and whose `ExecStop` puts every core's stock ceiling back. Switching it off removes the unit.
+- **Remove limit** removes the service and copies each core's `cpuinfo_max_freq` back into that limit file.
+- The value shown is read back from the limit file (world-readable), so a cap set by anything else shows too. Where `max_perf` exists, `scaling_max_freq` is not written: there it changes reported clocks only.
+
+API: `GET|PUT|DELETE /api/sparks/:id/cpu-clock` (`maxMHz`, `persist`, optional `sudoPassword`) and `GET /api/sparks/:id/cpu-clock/command?action=apply&maxMHz=2000&persist=1` (or `action=reset`).
+
 ## GPU power limit
 
 **Edit unit → GPU power limit** (GPU hosts on Linux; Sparks report no power limit, and Windows and Macs do not show it) sets each NVIDIA card's limit in watts with `nvidia-smi -i UUID -pl WATTS`. It lists every card with its current limit, the range it accepts and its default, and has:
@@ -1093,6 +1104,7 @@ sparkDash/
 | GET | `/api/health` · `/api/auth/status` | Bind / auth mode, the running server's version; whether a token is required and accepted |
 | GET · PUT · DELETE | `/api/sparks/:id/gpu-clock` | GPU clock cap on a Spark unit: status, apply (`maxMHz`, `persist`), remove (see [GPU clock cap](#gpu-clock-cap)) |
 | POST | `/api/sparks/gpu-clock-all` | GPU clock cap on every Spark at once: `{ maxMHz, persist? }`, or `{ reset: true }`; one result per unit (see [GPU clock cap](#gpu-clock-cap)) |
+| GET · PUT · DELETE | `/api/sparks/:id/cpu-clock` | CPU clock cap on a Spark unit: status, apply (`maxMHz`, `persist`), remove (see [CPU clock cap](#cpu-clock-cap)) |
 | GET · PUT | `/api/sparks/:id/gpu-power` | Per-card power limit on a Linux GPU host: status, set (`limits: [{ uuid, watts }]`, `persist`, optional `sudoPassword`) (see [GPU power limit](#gpu-power-limit)) |
 | POST | `/api/sparks/:id/shutdown` · `/wake` · `/api/sparks/shutdown-all` · `/wake-all` | Power controls (see [Power controls](#power-controls-shutdown--wake-on-lan)) |
 | POST | `/api/sparks/:id/refresh/:domain` | Re-poll one domain now (`storage` or `llm` only) |
