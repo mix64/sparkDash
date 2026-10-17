@@ -40,6 +40,8 @@ import { SudoVault } from "./storage/sudoVault.js";
 import { ElevatedDeleteAcks } from "./storage/ackStore.js";
 import { decryptSecret, encryptSecret } from "./secretsStore.js";
 import { registerStorageRoutes } from "./storage/routes.js";
+import { CpuClockManager } from "./cpuclock/CpuClockManager.js";
+import { registerCpuClockRoutes } from "./cpuclock/routes.js";
 import {
   backendForPort,
   decodeBenchManager,
@@ -2596,6 +2598,16 @@ registerStorageRoutes(app, {
     launchers: launcherStore.list(spark.id),
     llm: monitors.get(spark.id)?.snapshot()?.metrics?.llm ?? [],
   }),
+});
+
+// CPU clock cap (the cppc_cpufreq limit on every core), same privilege model and limiters as the GPU cap.
+registerCpuClockRoutes(app, {
+  manager: new CpuClockManager(),
+  registry,
+  recordEvent,
+  allowRead: (req) => allowTest(principalKey(req)),
+  allowChange: (req) => allowDestructive(principalKey(req)) && allowGlobalDestructive(clientKey(req)),
+  rejectLimited,
 });
 
 app.post("/api/sparks/:id/wake", async (req, res) => {
