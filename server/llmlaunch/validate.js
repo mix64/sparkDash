@@ -72,6 +72,9 @@ export function normalizeLauncherInput(input) {
     if (!Number.isInteger(p) || p < 1 || p > 65535) return { ok: false, error: "Port must be 1-65535" };
     port = p;
   }
+  // The model id the LLM probe reports on `port`: tells launchers that share a port apart.
+  // Display only, never part of a shell command.
+  const modelId = typeof body.modelId === "string" ? body.modelId.trim().slice(0, 200) : "";
   const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 300) : "";
-  return { ok: true, value: { name, dir, startScript, stopScript, port, notes } };
+  return { ok: true, value: { name, dir, startScript, stopScript, port, modelId, notes } };
 }

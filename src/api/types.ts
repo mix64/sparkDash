@@ -2436,6 +2436,8 @@ export interface LlmLauncher {
   stopScript: string;
   /** LLM port this model serves on, used to show "serving" when the probe sees it. */
   port: number | null;
+  /** Model id the probe reports on `port` while this model serves; tells models that share a port apart. */
+  modelId?: string;
   notes: string;
   createdAt?: number;
 }
@@ -2446,6 +2448,7 @@ export type LlmLauncherInput = {
   startScript?: string;
   stopScript?: string;
   port?: number | null;
+  modelId?: string;
   notes?: string;
 };
 

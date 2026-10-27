@@ -105,7 +105,7 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
   const titleId = useId();
   const { mounted, visible } = useModalPresence(open);
   const trapRef = useFocusTrap(mounted);
-  const [form, setForm] = useState({ name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", notes: "" });
+  const [form, setForm] = useState({ name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", modelId: "", notes: "" });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [discovery, setDiscovery] = useState<
@@ -130,9 +130,10 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
             startScript: launcher.startScript,
             stopScript: launcher.stopScript,
             port: launcher.port != null ? String(launcher.port) : "",
+            modelId: launcher.modelId ?? "",
             notes: launcher.notes ?? "",
           }
-        : { name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", notes: "" }
+        : { name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", modelId: "", notes: "" }
     );
   }, [open, launcher]);
 
@@ -177,6 +178,7 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
       startScript: form.startScript.trim() || "start.sh",
       stopScript: form.stopScript.trim() || "stop.sh",
       port: form.port.trim() ? Number(form.port) : null,
+      modelId: form.modelId.trim(),
       notes: form.notes.trim(),
     };
     try {
@@ -326,6 +328,20 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
             <p className="field-hint">
               {t("launcher.portHelp")}
             </p>
+            <div className="field">
+              <label htmlFor={`${titleId}-model`}>{t("launcher.modelId")}</label>
+              <input
+                id={`${titleId}-model`}
+                type="text"
+                className="field-input--mono"
+                value={form.modelId}
+                onChange={(e) => set({ modelId: e.target.value })}
+                placeholder="GLM-5.3-Flash-EXL3"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="field-hint">{t("launcher.modelIdHelp")}</p>
+            </div>
             <div className="field">
               <label htmlFor={`${titleId}-notes`}>{t("launcher.notes")}</label>
               <input
