@@ -952,14 +952,6 @@
   font-weight: 600;
   color: var(--color-text-strong);
 }
-.sp .sp-launch__dir {
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11.5px;
-  color: var(--color-muted);
-}
 .sp .sp-launch__notes {
   margin-top: 2px;
   font-size: 12px;

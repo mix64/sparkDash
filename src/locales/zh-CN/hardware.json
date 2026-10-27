@@ -288,6 +288,8 @@
   "launcher.stop": "停止脚本",
   "launcher.port": "端口",
   "launcher.portHelp": "端口为可选项。设置后，仪表盘在该端口发现 LLM 响应时会将模型显示为“服务中”。",
+  "launcher.modelId": "服务的模型 ID",
+  "launcher.modelIdHelp": "可选。多个模型使用同一端口时设置：只有端口报告的 ID 与之一致的模型显示为“服务中”，启动另一个模型时会先提示停止它。",
   "launcher.notes": "备注",
   "launcher.cancel": "取消",
   "launcher.directory": "{{name}} 上的目录（必填）",

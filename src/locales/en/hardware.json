@@ -288,6 +288,8 @@
   "launcher.stop": "Stop script",
   "launcher.port": "Port",
   "launcher.portHelp": "The port is optional. When set, the model shows as “serving” once the dashboard sees an LLM answering there.",
+  "launcher.modelId": "Served model ID",
+  "launcher.modelIdHelp": "Optional. Set it when several models use the same port: only the one whose ID the port reports shows as serving, and starting another one offers to stop it first.",
   "launcher.notes": "Notes",
   "launcher.cancel": "Cancel",
   "launcher.directory": "Directory on {{name}} (required)",
