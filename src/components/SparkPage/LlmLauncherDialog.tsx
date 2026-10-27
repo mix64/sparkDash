@@ -35,7 +35,7 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
   const titleId = useId();
   const { mounted, visible } = useModalPresence(open);
   const trapRef = useFocusTrap(mounted);
-  const [form, setForm] = useState({ name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", notes: "" });
+  const [form, setForm] = useState({ name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", modelId: "", notes: "" });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const overlayClose = useOverlayClose(onClose, !saving);
@@ -53,9 +53,10 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
             startScript: launcher.startScript,
             stopScript: launcher.stopScript,
             port: launcher.port != null ? String(launcher.port) : "",
+            modelId: launcher.modelId ?? "",
             notes: launcher.notes ?? "",
           }
-        : { name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", notes: "" }
+        : { name: "", dir: "", startScript: "start.sh", stopScript: "stop.sh", port: "", modelId: "", notes: "" }
     );
   }, [open, launcher]);
 
@@ -86,6 +87,7 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
       startScript: form.startScript.trim() || "start.sh",
       stopScript: form.stopScript.trim() || "stop.sh",
       port: form.port.trim() ? Number(form.port) : null,
+      modelId: form.modelId.trim(),
       notes: form.notes.trim(),
     };
     try {
@@ -184,6 +186,23 @@ export function LlmLauncherDialog({ open, sparkId, sparkName, launcher, onClose,
             <p className="field-hint">
               The port is optional. When set, the model shows as &ldquo;serving&rdquo; once the dashboard sees an LLM answering there.
             </p>
+            <div className="field">
+              <label htmlFor={`${titleId}-model`}>Served model ID</label>
+              <input
+                id={`${titleId}-model`}
+                type="text"
+                className="field-input--mono"
+                value={form.modelId}
+                onChange={(e) => set({ modelId: e.target.value })}
+                placeholder="GLM-5.3-Flash-EXL3"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="field-hint">
+                Optional. Set it when several models use the same port: only the one whose ID the port reports shows as serving, and
+                starting another one offers to stop it first.
+              </p>
+            </div>
             <div className="field">
               <label htmlFor={`${titleId}-notes`}>Notes</label>
               <input

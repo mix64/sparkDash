@@ -293,8 +293,23 @@ function LlmModelsPanelFor({ spark, className }: { spark: SparkSnapshot; classNa
     }
   }
 
+  function liveFor(l: LlmLauncher) {
+    const portIdx = l.port != null ? (spark.llmPorts ?? []).indexOf(l.port) : -1;
+    return portIdx >= 0 ? (spark.metrics.llm?.[portIdx] ?? null) : null;
+  }
+
+  /** The probe sees an LLM on the model's port and, when the model names its ID, that ID. */
+  function isServing(l: LlmLauncher) {
+    const live = liveFor(l);
+    if (!live?.available) return false;
+    return !l.modelId || live.modelId === l.modelId;
+  }
+
   function requestStart(l: LlmLauncher) {
-    const other = launchers.find((x) => x.id !== l.id && statuses[x.id] === "running");
+    // Another model holds the Spark: its start script still runs, or it serves on this model's port.
+    const other = launchers.find(
+      (x) => x.id !== l.id && (statuses[x.id] === "running" || (x.port != null && x.port === l.port && isServing(x)))
+    );
     if (other) setConfirm({ kind: "switch", id: l.id, otherId: other.id });
     else void run(l.id, "start");
   }
@@ -366,9 +381,8 @@ function LlmModelsPanelFor({ spark, className }: { spark: SparkSnapshot; classNa
 
   const rows = launchers.map((l) => {
     const state = statuses[l.id] ?? "unknown";
-    const portIdx = l.port != null ? (spark.llmPorts ?? []).indexOf(l.port) : -1;
-    const live = portIdx >= 0 ? spark.metrics.llm?.[portIdx] : null;
-    const serving = Boolean(live?.available);
+    const live = liveFor(l);
+    const serving = isServing(l);
     const mine = job?.launcherId === l.id;
     const pending = confirm?.id === l.id ? confirm : null;
     const other = pending?.kind === "switch" ? byId.get(pending.otherId) : null;
@@ -376,7 +390,7 @@ function LlmModelsPanelFor({ spark, className }: { spark: SparkSnapshot; classNa
       <SortableLaunch key={l.id} id={l.id} name={l.name} state={state} reorderable={launchers.length > 1}>
         <div className="sp-launch__main">
           <div className="sp-launch__title">
-            <b>{l.name}</b>
+            <b title={`${l.dir}/${l.startScript} · ${l.dir}/${l.stopScript}`}>{l.name}</b>
             {mine && job?.status === "running" && job.action === "stop" ? (
               <Tag tone="info">Stopping…</Tag>
             ) : serving ? (
@@ -391,11 +405,7 @@ function LlmModelsPanelFor({ spark, className }: { spark: SparkSnapshot; classNa
               <Tag>Stopped</Tag>
             ) : null}
           </div>
-          <div className="sp-launch__dir mono" title={`${l.dir}/${l.startScript} · ${l.dir}/${l.stopScript}`}>
-            {l.dir}
-          </div>
           {l.notes ? <div className="sp-launch__notes">{l.notes}</div> : null}
-          {serving && live?.modelId ? <div className="sp-launch__notes mono">{live.modelId}</div> : null}
         </div>
         <div className="sp-launch__actions">
           {pending?.kind === "stop" ? (

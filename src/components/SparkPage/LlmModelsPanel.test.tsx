@@ -225,3 +225,47 @@ describe("reordering the model list", () => {
     expect(names(container)).toEqual(["Alpha", "Beta", "Gamma"]);
   });
 });
+
+describe("models that share a port", () => {
+  const launcher = (id: string, name: string, modelId: string) => ({
+    id,
+    name,
+    dir: "/m",
+    startScript: "start.sh",
+    stopScript: "stop.sh",
+    port: 8888,
+    modelId,
+    notes: "",
+  });
+  const button = (root: HTMLElement, text: string) => [...root.querySelectorAll("button")].find((b) => b.textContent?.trim() === text);
+
+  beforeEach(() => {
+    _resetLauncherCache();
+    runLauncher.mockReset();
+    // Both start scripts have exited; the fixture's port 8888 reports "fixture-model".
+    fetchLaunchers.mockResolvedValue({
+      launchers: [launcher("a", "Alpha", "fixture-model"), launcher("b", "Beta", "other-model")],
+      job: null,
+      statuses: { a: "stopped", b: "stopped" },
+    });
+  });
+
+  it("marks only the model whose ID the port reports as serving", async () => {
+    const { container } = render(<LlmModelsPanel spark={makeSpark("s1")} />);
+    await flush();
+    const rows = [...container.querySelectorAll(".sp-launch")];
+    expect(rows[0].textContent).toContain("Serving :8888");
+    expect(rows[1].textContent).not.toContain("Serving");
+  });
+
+  it("offers to stop the serving model before starting another on its port", async () => {
+    const { container } = render(<LlmModelsPanel spark={makeSpark("s1")} />);
+    await flush();
+    const start = [...container.querySelectorAll(".sp-launch")][1].querySelector<HTMLButtonElement>(".btn--primary");
+    act(() => start!.click());
+    expect(container.textContent).toContain("Alpha is running. Stop it first, or run both?");
+    await act(async () => button(container, "Stop it, then start")!.click());
+    await flush();
+    expect(runLauncher).toHaveBeenCalledWith("s1", "a", "stop");
+  });
+});

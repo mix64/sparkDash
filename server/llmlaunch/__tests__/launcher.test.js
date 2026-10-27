@@ -29,7 +29,8 @@ test("validateScriptName and normalizeLauncherInput apply defaults and reject ba
   assert.notEqual(validateScriptName("reboot", "x"), null, "scripts must end in .sh");
   assert.notEqual(validateScriptName("start", "x"), null);
   const ok = normalizeLauncherInput({ name: " GLM ", dir: "/opt/glm", port: "8888" });
-  assert.deepEqual(ok.value, { name: "GLM", dir: "/opt/glm", startScript: "start.sh", stopScript: "stop.sh", port: 8888, notes: "" });
+  assert.deepEqual(ok.value, { name: "GLM", dir: "/opt/glm", startScript: "start.sh", stopScript: "stop.sh", port: 8888, modelId: "", notes: "" });
+  assert.equal(normalizeLauncherInput({ name: "a", dir: "/x", modelId: " GLM-5.3-Flash-EXL3 " }).value.modelId, "GLM-5.3-Flash-EXL3");
   assert.equal(normalizeLauncherInput({ name: "", dir: "/x" }).ok, false);
   assert.equal(normalizeLauncherInput({ name: "a", dir: "/x", port: 70000 }).ok, false);
   assert.equal(slugify("GLM 5.3 (EXL3)!"), "glm-5-3-exl3");
