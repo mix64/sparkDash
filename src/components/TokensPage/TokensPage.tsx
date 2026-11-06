@@ -28,6 +28,7 @@ import {
   tallyOf,
   trackedBuckets,
   windowFor,
+  ZONE_SUFFIX,
   type Comparison,
   type GroupBy,
   type RangeKey,
@@ -435,7 +436,8 @@ function Tiles({ s, cmp, spec }: { s: Summary; cmp: Comparison | null; spec: (ty
   const period = rangePhrase(t, spec.key);
   const count = spec.count ?? 0;
   const unit = spec.unit === "hour" ? t("tokens.hour", { count }) : t("tokens.day", { count });
-  const previousPeriod = spec.count == null ? t("tokens.periodAll") : i18n.language.startsWith("zh") ? `${count}${unit}` : `${count} ${unit}`;
+  // CJK unit words attach to the number ("7天"); a unit left in a Latin script keeps its space ("7 days").
+  const previousPeriod = spec.count == null ? t("tokens.periodAll") : /[A-Za-z]/.test(unit) ? `${count} ${unit}` : `${count}${unit}`;
   const prevWord = t("tokens.previousPeriod", { period: previousPeriod });
   const ratio = s.genPerPrompt != null && s.generated > 0 ? s.prompt / s.generated : null;
   return (
@@ -491,7 +493,7 @@ function Tiles({ s, cmp, spec }: { s: Summary; cmp: Comparison | null; spec: (ty
       <Tile
         label={t("tokens.busiest", { unit: per })}
         value={s.busiest ? fmt(s.busiest.total) : "—"}
-        sub={s.busiest ? bucketTitle(s.busiest.key, spec.unit, undefined, i18n.language).replace(/(?: \((?:UTC|local)\)|（(?:UTC|本地时间)）)$/, "") : t("tokens.noTrafficYet")}
+        sub={s.busiest ? bucketTitle(s.busiest.key, spec.unit, undefined, i18n.language).replace(ZONE_SUFFIX, "") : t("tokens.noTrafficYet")}
         title={s.busiest ? s.busiest.total.toLocaleString() : undefined}
       />
     </section>

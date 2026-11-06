@@ -138,6 +138,12 @@ describe("keys and labels", () => {
     expect(bucketTitle("2026-10-07T23", "hour", 120)).toBe("Thu 8 Oct, 01:00–02:00 (local)");
     expect(bucketTitle("2026-10-07T23", "hour", 120, "zh-CN")).toBe("2026年10月8日周四, 01:00–02:00（本地时间）");
   });
+  it("labels Chinese and Japanese days as month and day with a full-width zone in that language", () => {
+    expect(bucketLabel("2026-10-07", "day", undefined, "zh-CN")).toBe("10月7日");
+    expect(bucketLabel("2026-10-07", "day", undefined, "ja")).toBe("10月7日");
+    expect(bucketTitle("2026-10-07", "day", undefined, "ja")).toBe("2026年10月7日(水)（UTC）");
+    expect(bucketTitle("2026-10-07T23", "hour", 120, "ja")).toBe("2026年10月8日(木), 01:00–02:00（ローカル時間）");
+  });
   it("shows the minutes of half-hour zones, and follows the Settings time zone", () => {
     expect(bucketLabel("2026-10-07T14", "hour", 330)).toBe("19:30");
     expect(bucketTitle("2026-10-07T14", "hour", 330)).toBe("Wed 7 Oct, 19:30–20:30 (local)");
@@ -329,6 +335,16 @@ describe("insights", () => {
     expect(text).toMatch(/prefix cache served \d+(\.\d)?% of prompt tokens/);
     expect(text).toContain("big");
     expect(text).toContain("had no traffic");
+  });
+  it("names the busiest bucket without its zone suffix in Chinese and Japanese", () => {
+    const days = [row("2026-10-03", { completionTokens: 5000 }), row("2026-10-05")];
+    const hours = [row("2026-10-07T03", { completionTokens: 5000 }), row("2026-10-07T05")];
+    const busiest = (rows: TokenHistoryRow[], range: "7d" | "24h", locale: string) =>
+      buildInsights({ ...ctx(rows, range), tzOffsetMin: 0, formatBucketTitle: (key, unit, offsetMin) => bucketTitle(key, unit, offsetMin, locale) }).join("\n");
+    expect(busiest(days, "7d", "zh-CN")).toContain("busiest day was 2026年10月3日周六 with");
+    expect(busiest(hours, "24h", "zh-CN")).toContain("busiest hour was 2026年10月7日周三, 03:00–04:00 with");
+    expect(busiest(days, "7d", "ja")).toContain("busiest day was 2026年10月3日(土) with");
+    expect(busiest(hours, "24h", "ja")).toContain("busiest hour was 2026年10月7日(水), 03:00–04:00 with");
   });
   it("single day: no busiest, no idle sentences", () => {
     const text = buildInsights(ctx([row("2026-10-07")])).join("\n");

@@ -44,6 +44,20 @@ it("switches the mounted Settings page both ways without saving server settings"
   expect(fetchMock.mock.calls.every(([, init]) => !init?.method || init.method === "GET")).toBe(true);
 });
 
+it("offers Japanese as a third language and switches to it and back", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => json(defaults)));
+  render(<SettingsDialog open onClose={() => {}} onSaved={() => {}} />);
+  await flush();
+  expect(button("日本語").getAttribute("aria-checked")).toBe("false");
+  await act(async () => button("日本語").click());
+  expect(button("日本語").getAttribute("aria-checked")).toBe("true");
+  expect(document.documentElement.lang).toBe("ja");
+  expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("ja");
+  await act(async () => document.querySelector<HTMLButtonElement>('[role="radio"]')!.click());
+  expect(title()).toBe("Settings");
+  expect(button("日本語").getAttribute("aria-checked")).toBe("false");
+});
+
 it("preserves pending settings changes while switching and sends only the original settings fields", async () => {
   const writes: unknown[] = [];
   vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {

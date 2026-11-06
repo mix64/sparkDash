@@ -12,9 +12,11 @@ import {
   type ActivityFilter, type CategoryId, type RangeId, type Severity,
 } from "./activityStats";
 import { useActivityFeed } from "./useActivityFeed";
+import { normalizeLocale, type Locale } from "../../i18n";
 import "../../styles/activity.css";
 
 const DAY_MS = 86_400_000;
+const INTL_LOCALES: Record<Locale, string> = { en: "en-US", "zh-CN": "zh-CN", ja: "ja-JP" };
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 /** Fallback for browsers or contexts without the async clipboard API. */
@@ -37,7 +39,7 @@ function legacyCopy(text: string): boolean {
 export function ActivityPage({ sparks, onSelectSpark }: { sparks: SparkSnapshot[]; onSelectSpark?: (id: string) => void }) {
   const { t, i18n } = useTranslation("activity");
   const { severityLabels, categoryLabels } = useActivityLabels();
-  const locale = i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en-US";
+  const locale = INTL_LOCALES[normalizeLocale(i18n.resolvedLanguage) ?? "en"];
 const ACTIVITY_CLEAR = [
   { id: "7d", label: t("clear.older7d"), ask: t("clear.older7dAsk"), arg: 7 * DAY_MS },
   { id: "24h", label: t("clear.older24h"), ask: t("clear.older24hAsk"), arg: DAY_MS },

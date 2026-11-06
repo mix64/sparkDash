@@ -1,0 +1,161 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "tokens": "Token totals",
+    "cost": "Cost compare",
+    "energy": "Fleet energy",
+    "temps": "Temps",
+    "activity": "Activity",
+    "showcase": "Showcase",
+    "kiosk": "Kiosk",
+    "sparks": "Sparks",
+    "stats": "Stats",
+    "settings": "Settings",
+    "benchmarks": "Benchmarks",
+    "fleet": "Fleet",
+    "brandOverview": "sparkDash overview",
+    "openSearch": "Open command palette",
+    "showSidebar": "Show sidebar",
+    "showSidebarTitle": "Show sidebar (Ctrl+B)",
+    "apiKeys": "API Keys"
+  },
+  "sidebar": {
+    "sortable": "sortable",
+    "dragStart": "ドラッグ可能なアイテム {{id}} を拾い上げました。",
+    "dragOver": "ドラッグ可能なアイテム {{id}} がドロップ可能エリア {{over}} の上に移動しました。",
+    "dragOutside": "ドラッグ可能なアイテム {{id}} がドロップ可能エリアから離れました。",
+    "dragEndOver": "Draggable item {{id}} was dropped over droppable area {{over}}",
+    "dragEnd": "ドラッグ可能なアイテム {{id}} をドロップしました。",
+    "dragCancel": "ドラッグがキャンセルされました。ドラッグ可能なアイテム {{id}} をドロップしました。",
+    "fleetNavigation": "Fleet navigation",
+    "hideSidebar": "Hide sidebar",
+    "hideSidebarTitle": "Hide sidebar (Ctrl+B)",
+    "jumpTo": "Jump to…",
+    "addSpark": "Add Spark or GPU host",
+    "addSparkTitle": "Add Spark / GPU host",
+    "noSparks": "Spark がまだありません。+ を使って追加してください。",
+    "workspace": "Workspace",
+    "kioskTitle": "Full-screen wall display (Esc returns)",
+    "dragInstructions": "Enter キーを押してこの Spark を開きます。順序を変更するには、M キーを押し、矢印キーで移動させ、Enter キーで確定、または Escape キーでキャンセルしてください。",
+    "dragTitle": "ドラッグして順序を変更します（キーボード：M）。",
+    "live": "Live",
+    "livePoll": "Live · {{seconds}} s poll",
+    "reconnecting": "Reconnecting…",
+    "credit": "by Mia's AI Lab",
+    "website": "Mia's AI Lab website",
+    "github": "sparkDash on GitHub",
+    "x": "Mia's AI Lab on X"
+  },
+  "mobile": {
+    "primary": "Primary",
+    "chooseSpark": "Choose a Spark",
+    "addSpark": "Add Spark / GPU host"
+  },
+  "spark": {
+    "offline": "off",
+    "offlineTooltip": "offline",
+    "worker": "worker",
+    "prefilling": "prefilling",
+    "decoding": "decoding"
+  },
+  "bench": {
+    "decode": {
+      "label": "Decode",
+      "blurb": "並行処理数増加時の生成速度（トークン/秒）。"
+    },
+    "prefill": {
+      "label": "Prefill",
+      "blurb": "コンテキストサイズごとのプロンプト処理速度と初回トークンまでの時間。"
+    },
+    "quality": {
+      "label": "Quality",
+      "blurb": "モデル、量子化、KVキャッシュ形式を比較するための、固定シードの品質スイート。"
+    },
+    "toolEval": {
+      "label": "Tool Eval Bench",
+      "blurb": "69 の決定論的シナリオ（選択、パラメータ、マルチステップ、安全性）におけるツール呼び出しの品質。"
+    }
+  },
+  "palette": {
+    "dialogLabel": "Command palette",
+    "placeholder": "Spark へのジャンプ、アクションの実行、設定の表示…",
+    "searchLabel": "Search commands",
+    "escapeKey": "Esc",
+    "listLabel": "Commands",
+    "noMatch": "No match for “{{query}}”.",
+    "move": "↑↓ to move",
+    "open": "↵ to open",
+    "close": "Esc to close"
+  },
+  "install": {
+    "dialogLabel": "Install sparkDash",
+    "title": "Install sparkDash",
+    "description": "ホーム画面に追加して、アプリのようなフルスクリーンダッシュボードを利用できます。",
+    "button": "Install",
+    "dismiss": "Dismiss",
+    "ios": {
+      "title": "Install sparkDash on your iPhone",
+      "tapShare": "Tap the ",
+      "share": "Share",
+      "icon": " icon ",
+      "then": " in Safari, then ",
+      "addToHomeScreen": "Add to Home Screen",
+      "period": "."
+    }
+  },
+  "theme": {
+    "title": "Theme: {{theme}}",
+    "switchLabel": "Switch theme (currently {{theme}})",
+    "white": "white",
+    "light": "light",
+    "dark": "dark",
+    "oled": "oled"
+  },
+  "connection": {
+    "ageSeconds": "{{seconds}}s",
+    "ageMinutes": "{{minutes}}m {{seconds}}s",
+    "connecting": "Connecting to live telemetry…",
+    "staleWithAge": "テレメトリが古くなっています。最後の有効な更新は {{age}} 前です。",
+    "disconnectedWithAge": "ライブテレメトリが切断されています。{{age}} 前のデータを表示しています。",
+    "waitingForFirstUpdate": "ライブテレメトリが切断されています。最初の有効な更新を待機中です…",
+    "dataError": "Telemetry data error.",
+    "stale": "Telemetry is stale.",
+    "disconnected": "ライブテレメトリが切断されています。"
+  },
+  "error": {
+    "dismiss": "Dismiss",
+    "dismissLabel": "Dismiss error"
+  },
+  "openAccess": {
+    "label": "Open access",
+    "dialogLabel": "Open access",
+    "explanation": "このダッシュボードはトークンなしでネットワークからアクセス可能なため、ネットワーク上の誰でも設定を変更できます。トークンを必須にするには、サーバーで SPARKDASH_TOKEN を設定してください。",
+    "dismiss": "Don't show again"
+  },
+  "commands": {
+    "goTo": "Go to",
+    "actions": "Actions",
+    "benchmarks": "Benchmarks",
+    "page": "Page",
+    "wallDisplay": "Wall display",
+    "online": "online",
+    "offline": "offline",
+    "benchmark": "{{name}} benchmark",
+    "add": "Add a Spark or GPU host",
+    "showcase": "Open showcase on {{name}} in a new window",
+    "edit": "Edit {{name}}",
+    "theme": "Switch theme",
+    "themeHint": "white · light · dark · oled",
+    "sidebar": "Show or hide the sidebar",
+    "settings": "Open settings",
+    "harness": "Set up harness sessions"
+  },
+  "app": {
+    "settingsError": "設定を読み込めませんでした: {{detail}}。再読み込みしてやり直してください。",
+    "refreshError": "Spark を更新できませんでした: {{detail}}。以前のデータが表示されたままです。",
+    "reorderError": "Spark の順序を保存できませんでした: {{detail}}。以前の順序に復元されました。",
+    "emptyTitle": "No Spark registered",
+    "emptyDescription": "DGX Spark または GPU ホストを追加してモニタリングを開始してください。",
+    "addSpark": "Add Spark"
+  }
+}

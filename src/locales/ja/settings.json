@@ -1,0 +1,238 @@
+{
+  "dialog": {
+    "title": "Settings",
+    "close": "Close",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "appearance": {
+    "title": "Appearance",
+    "help": "このデバイスに即座に適用されます。このブラウザに保存されます。",
+    "theme": "Theme",
+    "white": "White",
+    "light": "Light",
+    "dark": "Dark",
+    "oled": "OLED"
+  },
+  "refresh": {
+    "title": "Refresh rate",
+    "help": "各ユニットのGPU、CPU、メモリ、ネットワーク、LLMメトリクスのポーリング間隔、およびダッシュボードの更新頻度。リモートユニットはSSH経由でポーリングされるため、1秒間隔が最もコストが高くなります。ストレージとライブネスは、それぞれ独自の低速チェックを行います。",
+    "interval": "Poll interval",
+    "oneSecond": "1s",
+    "twoSeconds": "2s",
+    "fiveSeconds": "5s",
+    "tenSeconds": "10s"
+  },
+  "sessionAge": {
+    "title": "Session age",
+    "help": "これより古いハーネスセッションを非表示にします。最古の選択肢は14日です。無制限の設定はありません。",
+    "hours": "{{count}}h",
+    "days": "{{count}}d"
+  },
+  "harnessSessions": {
+    "title": "Harness sessions",
+    "help": "各マシン上のヘルパーが、OpenClaw、OpenCode、oh-my-pi、Hermes、DeepSeek Harnessをリストアップします。ダッシュボードにはヘルパーのアドレスとトークンのみが保存されます。",
+    "setup": "Set up"
+  },
+  "temperature": {
+    "title": "Temperature unit",
+    "aria": "Temperature unit"
+  },
+  "healthTemps": {
+    "title": "GPU temperature alerts",
+    "help": "ヘルスステータスは、表示単位に関わらず、最も温度の高いGPUが1つ目の値に達すると警告を出し、2つ目の値に達するとクリティカルになります。アラート通知にも同じ制限が適用されます。デフォルトは85と90で、警告値はクリティカル値より低く設定する必要があります。",
+    "warn": "Warning temperature (°C)",
+    "reset": "Reset to Defaults",
+    "critical": "Critical temperature (°C)"
+  },
+  "timeZone": {
+    "title": "Time zone",
+    "help": "Tokens、Energy、Activityチャートの時間境界とラベル。空欄の場合はこのブラウザ({{timeZone}})に従います。日次トークンバケットと月次エネルギー合計はUTCのままとなります。",
+    "placeholder": "Browser default",
+    "inputTitle": "Empty follows this browser ({{timeZone}})",
+    "useBrowser": "Use browser",
+    "unknown": "タイムゾーンが不明です。Europe/Paris をお試しください。"
+  },
+  "defaultLlmPort": {
+    "title": "Default LLM port",
+    "help": "新しいSpark（1–65535）を追加する際に事前入力されます。"
+  },
+  "toggles": {
+    "hideOffline": {
+      "title": "Hide offline Sparks",
+      "help": "OverviewでオフラインのSparkを自動的に非表示にします。"
+    },
+    "hideWorkers": {
+      "title": "Hide worker nodes",
+      "help": "OverviewおよびサイドバーからWorkerロールのSparkを削除します。ダイレクトURLやバッチパワー / Hermesアクションには引き続き含まれます。"
+    },
+    "overviewSearch": {
+      "title": "Show search and status filters",
+      "help": "Overviewの検索フィールドとステータスドロップダウン（All / Online / Offline / Issues）。デフォルトではオフです。"
+    },
+    "benchShareImage": {
+      "title": "Benchmark share image",
+      "help": "decode/prefillのCopy resultsボタンに、Copy as text / Copy as image（シェアカード）のキャレットが表示されます。プレーンテキストボタンを維持するには、これをオフにしてください。"
+    },
+    "vramBreakdown": {
+      "title": "Detailed VRAM breakdown",
+      "help": "VRAMバーはメモリをLLMエンジン、システム、空きメモリに分割し、空きメモリの割合が高いときではなく、少なくなったときにアンバーまたは赤に変わります。これをオフにすると、単一のパーセンテージバーになります。"
+    },
+    "prometheus": {
+      "title": "Prometheus metrics",
+      "help": "Prometheus / Grafanaが {{origin}}/metrics でスクレイピングできるよう、各ユニットのメトリクスを提供します。デフォルトではオフです。"
+    },
+    "intelVramSudo": {
+      "title": "Intel Arc VRAM via sudo",
+      "help": "各ホストで sudo -n を使用して、root専用のdebugfsから正確なIntel Arc VRAM使用量を読み取ります。デフォルトではオフです。この場合、VRAMにはPCI BARサイズが表示され、sudoで実行されるものは何もなくなります。"
+    },
+    "metricsHistory": {
+      "title": "Metrics history",
+      "help": "サーバーにユニットあたり48時間分の1分間隔の履歴と30日分の15分間隔の履歴を保持し（GPU、メモリヘッドルーム、CPU、ネットワーク、LLM tok/sおよびKV。ディスク使用量は1ユニットあたり最大約1MB）、各ユニットのページにあるHistoryパネルにグラフ表示します。デフォルトではオフです。"
+    },
+    "fleetEnergy": {
+      "title": "Show Fleet Energy",
+      "help": "ローリング方式のフリートパワー推定値を表示するOverviewカード。フルのFleet energyページは、常にサイドバーからアクセス可能です。"
+    },
+    "llmTokenTotals": {
+      "title": "Show LLM Token Totals",
+      "help": "モデルごとの累積プロンプト/生成トークン数を表示するOverviewカード。フルのToken totalsページは、常にサイドバーからアクセス可能です。"
+    },
+    "recentActivity": {
+      "title": "Show Recent activity",
+      "help": "最新のヘルスおよびカーネルイベントを表示するOverviewカード。フルのActivityページは、常にサイドバーからアクセス可能です。"
+    },
+    "fleetDecode": {
+      "title": "Show Fleet decode tile",
+      "help": "フリートの総生成tok/sを表示するOverviewタイル。"
+    },
+    "fleetPower": {
+      "title": "Show Fleet power tile",
+      "help": "フリートの総消費電力を表示するOverviewタイル。"
+    },
+    "memoryInUse": {
+      "title": "Show Memory in use tile",
+      "help": "フリートの総メモリ使用量を表示するOverviewタイル。"
+    },
+    "tokens24Hours": {
+      "title": "Show Tokens in last 24 hours tile",
+      "help": "過去24時間に生成されたトークン数（トークンがまだ追跡されていない場合は、オンラインユニット数）を表示するOverviewタイル。"
+    },
+    "fleetExceptions": {
+      "title": "Show active fleet exceptions",
+      "help": "オフラインホスト、GPUスロットリング、ディスク、LLM、およびTailnetアラート用のOverviewストリップ。デフォルトではオフです。"
+    },
+    "benchDebugTraces": {
+      "title": "Save benchmark debug traces",
+      "help": "プロンプト、HTTP/completion ID、コンテンツプレビュー、およびGPUサンプルをベンチ履歴に保存します。デフォルトではオフです。履歴ファイルのサイズが大きくなります。"
+    }
+  },
+  "electricityPrice": {
+    "title": "Electricity price",
+    "help": "Fleet energyページの推定コストに使用される1kWhあたりの単価。コストを非表示にする場合は空欄のままにしてください。",
+    "currency": "Currency symbol"
+  },
+  "alertNotifications": {
+    "title": "Alert notifications",
+    "help": "ヘルスチェックの結果および概要の例外が、一定時間継続した際、および解消した際に、ntfy、Discord、Slack、またはウェブフックに送信します。デフォルトではオフです。",
+    "on": "On",
+    "off": "Off",
+    "configure": "Configure…"
+  },
+  "browserAlerts": {
+    "tabBadge": {
+      "title": "Tab badge",
+      "help": "タブのタイトルには、オフラインユニット、スロットリング、ストレージ、LLM、ヘルスなど、アクティブなフリートアラートの数が「(2) sparkDash」として表示され、アイコンに赤（クリティカル）または琥珀色のドットが表示されます。「Show active fleet exceptions」がオフの場合でもすべてカウントされます。このブラウザのみ有効で、即座に保存されます。"
+    },
+    "desktop": {
+      "title": "Desktop notifications",
+      "help": "このページが開いている間に、フリートアラート（タブバッジと同様のあらゆる種類）がアクティブになった際に通知が届きます。このブラウザのみ有効で、即座に保存されます。",
+      "blocked": "このサイトでは通知がブロックされています。ブラウザのサイト設定で許可した後、再度この機能をオンにしてください。",
+      "refused": "このブラウザが通知権限のリクエストを拒否しました。",
+      "insecure": "ブラウザはHTTPSまたはlocalhostでの通知のみを許可していますが、このページはプレーンなHTTPです。SSHトンネル、Tailscale Serve、またはHTTPSプロキシを使用するか、「Alert notifications」配下のntfyチャンネルを使用してください。",
+      "unsupported": "このブラウザはデスクトップ通知をサポートしていません。",
+      "withdrawn": "ブラウザで権限が取り消されました。再度許可されるまで何も表示されません。"
+    }
+  },
+  "accessToken": {
+    "title": "Access token",
+    "help": "サーバーがすでに要求しているトークンの、このブラウザ側のコピーです。これ単体では保護機能を有効にできません。ホストの .env に SPARKDASH_TOKEN を設定し、コンテナを再作成してください。このブラウザにのみ保存されます。",
+    "set": "Set",
+    "notSet": "Not set",
+    "change": "Change",
+    "add": "Add token",
+    "clear": "Clear"
+  },
+  "about": {
+    "version": "sparkDash v{{version}}",
+    "github": "GitHub MiaAI-Lab"
+  },
+  "errors": {
+    "healthTempsRange": "GPU温度の制限値は、{{min}} 〜 {{max}} °C の数値である必要があります。",
+    "healthTempsOrder": "警告温度は、クリティカル温度よりも低く設定する必要があります。",
+    "invalidTimeZone": "\"{{timeZone}}\" は認識されているタイムゾーン（例：Europe/Paris）ではありません。フィールドをクリアしてブラウザの設定に従ってください。",
+    "invalidMqttUrl": "\"{{url}}\" はブローカーのURLではありません。mqtt://host:1883（または mqtts://, ws://, wss://）を使用するか、フィールドをクリアしてください。",
+    "mqttCredentials": "ブローカーのURLからユーザー名とパスワードを削除してください。ユーザー名は MQTT username に、パスワードは環境変数 SPARKDASH_MQTT_PASSWORD に入力してください。"
+  },
+  "mqtt": {
+    "publishing": {
+      "title": "MQTT publishing",
+      "help": "アクティビティフィードのイベントおよび各ユニットの読み取り値を、変更に応じてMQTTブローカー（Home Assistant, Node-RED など）にパブリッシュします。デフォルトではオフです。トピックの一覧は README の MQTT セクションに記載されています。"
+    },
+    "url": {
+      "title": "MQTT broker URL",
+      "help": "mqtt://host:1883、TLSの場合は mqtts://、WebSocketブローカーの場合は ws(s):// を使用します。パスワードは環境変数 SPARKDASH_MQTT_PASSWORD から読み取られ、settings.json に保存されることはありません。"
+    },
+    "username": {
+      "title": "MQTT username",
+      "help": "匿名パブリッシュを許可するブローカーの場合は、空欄のままにしてください。",
+      "placeholder": "empty"
+    },
+    "prefix": {
+      "title": "MQTT topic prefix",
+      "help": "パブリッシュされるすべてのデータのトピックルート：PREFIX/events, PREFIX/status/… および PREFIX/metrics/…"
+    },
+    "discovery": {
+      "title": "Home Assistant discovery",
+      "help": "保持型のディスカバリ設定をパブリッシュし、Home Assistantがユニットごとにセンサーを備えたデバイスを自動的に作成できるようにします。上記のMQTTパブリッシュ機能が必要です。"
+    },
+    "discoveryPrefix": {
+      "title": "Discovery prefix",
+      "help": "Home AssistantのMQTTインテグレーションのディスカバリプレフィックス（デフォルトは homeassistant）と一致している必要があります。"
+    }
+  },
+  "gpuClock": {
+    "title": "GPU clock cap",
+    "help": "すべてのSparkのGPUグラフィックスクロックを一括で制限します（nvidia-smi -lgc）。設定したい状態（フルキャパシティまたは 1800–2400 MHz）を選択し、「Save」で適用します。オフラインまたはGPU非搭載のユニットはスキップされ、報告されます。",
+    "reading": "Reading the fleet…",
+    "unknown": "現在、クロックを報告しているユニットはありません。設定を再度開いてください。",
+    "nowMixed": "Now: mixed — {{caps}}{{unreadable}}",
+    "nowFull_one": "Now: full capacity on {{count}} unit{{unreadable}}",
+    "nowFull_other": "Now: full capacity on {{count}} units{{unreadable}}",
+    "nowCapped_one": "Now: capped at {{mhz}} MHz on {{count}} unit{{unreadable}}",
+    "nowCapped_other": "Now: capped at {{mhz}} MHz on {{count}} units{{unreadable}}",
+    "unreadable": ", {{count}} unreadable",
+    "states": "GPU clock cap states",
+    "fullCapacity": "Full capacity",
+    "fullCapacityState": "full capacity",
+    "frequency": "{{mhz}} MHz",
+    "keepAfterReboot": "再起動後も保持 — 選択した状態は、各ユニットにブートフックとしてもインストールされます。",
+    "persistenceUnavailable": "ここでは提供されていません：これらのユニットには、キャップが利用可能なブートフック（ブートサービス用のルートシェルも、@reboot ジョブ用の稼働中の cron サービスも）がありません。キャップは次回の再起動まで適用されます。",
+    "pending": "まだ適用されていません — [保存] を押してすべてのユニットに変更を適用してください。",
+    "applying": "Applying…",
+    "requestFailed": "GPU clock request failed",
+    "skipped": ", {{count}} skipped",
+    "skippedReason": "{{id}}: skipped — {{reason}}",
+    "retryWithoutPersistence": "「再起動後も保持」のチェックを外すと、代わりに次回の再起動までキャップが適用されます。",
+    "keptCron": " — 各ユニットの @reboot cron ジョブによって保持",
+    "keptMixed": " — 再起動後も保持（ユニットごとのブートサービスまたは @reboot ジョブ）",
+    "kept": " — kept after reboot",
+    "incomplete": "リクエストされた変更を完了したユニットはありません — 一部の変更は適用された可能性があります{{skipped}}",
+    "nothingUnlocked": "Nothing changed — 0 of {{total}} units unlocked{{skipped}}",
+    "nothingCapped": "Nothing changed — 0 of {{total}} units capped{{skipped}}",
+    "resultFull": "Full capacity — {{count}} of {{total}} units{{skipped}}{{persistence}}",
+    "resultCapped": "Capped at {{mhz}} MHz — {{count}} of {{total}} units{{skipped}}{{persistence}}"
+  }
+}
