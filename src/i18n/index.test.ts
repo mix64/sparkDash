@@ -14,6 +14,11 @@ describe("language preference", () => {
     expect(normalizeLocale("en-GB")).toBe("en");
   });
 
+  it("recognizes Japanese tags in any case or separator", () => {
+    for (const tag of ["ja", "ja-JP", "JA-jp", "ja_JP", "ja-Jpan-JP"]) expect(normalizeLocale(tag)).toBe("ja");
+    for (const tag of ["jav", "jv-ID"]) expect(normalizeLocale(tag)).toBeNull();
+  });
+
   it("prefers saved language over browser language and ignores unsupported saved values", () => {
     vi.spyOn(navigator, "language", "get").mockReturnValue("zh-CN");
     localStorage.setItem(LOCALE_STORAGE_KEY, "en");
@@ -28,6 +33,17 @@ describe("language preference", () => {
     expect(document.documentElement.lang).toBe("zh-CN");
     expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("zh-CN");
     expect(detectLocale()).toBe("zh-CN");
+    await setLocale("en");
+    expect(document.documentElement.lang).toBe("en");
+  });
+
+  it("switches to Japanese and back, updating HTML and the saved preference", async () => {
+    vi.spyOn(navigator, "language", "get").mockReturnValue("ja-JP");
+    expect(detectLocale()).toBe("ja");
+    await setLocale("ja");
+    expect(i18n.resolvedLanguage).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("ja");
     await setLocale("en");
     expect(document.documentElement.lang).toBe("en");
   });

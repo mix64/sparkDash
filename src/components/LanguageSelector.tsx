@@ -1,19 +1,19 @@
 import { useTranslation } from "react-i18next";
-import { i18n, setLocale } from "../i18n";
+import { i18n, LOCALES, setLocale, type Locale } from "../i18n";
 import { SettingRow } from "./SettingRows";
 
 export function LanguageSelector() {
   const { t } = useTranslation("language");
-  const locale = i18n.resolvedLanguage;
+  const labels: Record<Locale, string> = { en: t("english"), "zh-CN": t("simplifiedChinese"), ja: t("japanese") };
+  const current = i18n.resolvedLanguage;
   return (
     <SettingRow title={t("title")} help={t("help")}>
       <div className="seg" role="radiogroup" aria-label={t("title")}>
-        <button type="button" role="radio" aria-checked={locale === "en"} className={locale === "en" ? "is-on" : ""} onClick={() => void setLocale("en")}>
-          {t("english")}
-        </button>
-        <button type="button" role="radio" aria-checked={locale === "zh-CN"} className={locale === "zh-CN" ? "is-on" : ""} onClick={() => void setLocale("zh-CN")}>
-          {t("simplifiedChinese")}
-        </button>
+        {LOCALES.map((locale) => (
+          <button key={locale} type="button" role="radio" aria-checked={current === locale} className={current === locale ? "is-on" : ""} onClick={() => void setLocale(locale)}>
+            {labels[locale]}
+          </button>
+        ))}
       </div>
     </SettingRow>
   );

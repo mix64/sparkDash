@@ -157,6 +157,23 @@ function tzOffset(ms: number, offsetMin?: number): number {
 }
 
 /**
+ * Languages whose bucket labels use 月/日 dates, a full-width zone suffix and no space between a count and its unit,
+ * keyed by primary language subtag, with the word each one uses for local time.
+ */
+const CJK_LOCAL_ZONE = new Map([
+  ["zh", "本地时间"],
+  ["ja", "ローカル時間"],
+]);
+
+/** The local-time word when `locale` uses CJK calendar labels, otherwise undefined. */
+export function cjkLocalZone(locale: string | undefined): string | undefined {
+  return locale ? CJK_LOCAL_ZONE.get(locale.toLowerCase().split(/[-_]/)[0]) : undefined;
+}
+
+/** Matches the zone suffix bucketTitle appends in any language, so callers can drop it. */
+export const ZONE_SUFFIX = new RegExp(String.raw`(?: \((?:UTC|local)\)|（(?:UTC|${[...CJK_LOCAL_ZONE.values()].join("|")})）)$`);
+
+/**
  * Short x-axis label. Days are UTC dates ("7 Oct"); hours are LOCAL clock hours ("14:00").
  * `offsetMin` (minutes east of UTC) overrides the browser's zone — used by tests.
  */
@@ -165,7 +182,7 @@ export function bucketLabel(key: string, unit: BucketUnit, offsetMin?: number, l
   if (ms == null) return key;
   if (unit === "day") {
     const d = new Date(ms);
-    return locale?.startsWith("zh") ? `${d.getUTCMonth() + 1}月${d.getUTCDate()}日` : `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+    return cjkLocalZone(locale) ? `${d.getUTCMonth() + 1}月${d.getUTCDate()}日` : `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
   }
   const d = new Date(ms + tzOffset(ms, offsetMin) * 60_000);
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
@@ -175,7 +192,8 @@ export function bucketLabel(key: string, unit: BucketUnit, offsetMin?: number, l
 export function bucketTitle(key: string, unit: BucketUnit, offsetMin?: number, locale?: string): string {
   const ms = parseKey(key);
   if (ms == null) return key;
-  const zone = (kind: "UTC" | "local") => locale?.startsWith("zh") ? `（${kind === "UTC" ? "UTC" : "本地时间"}）` : ` (${kind})`;
+  const localZone = cjkLocalZone(locale);
+  const zone = (kind: "UTC" | "local") => localZone ? `（${kind === "UTC" ? "UTC" : localZone}）` : ` (${kind})`;
   const date = (d: Date, includeYear: boolean) =>
     locale
       ? new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(d)
@@ -557,7 +575,7 @@ export function buildInsights(i: InsightInput): string[] {
 
   if (s.busiest && s.activeBuckets >= 2) {
     const share = s.busiest.total / Math.max(1, i.totals.reduce((a, b) => a + b.total, 0));
-    const when = (i.formatBucketTitle?.(s.busiest.key, i.spec.unit, i.tzOffsetMin) ?? bucketTitle(s.busiest.key, i.spec.unit, i.tzOffsetMin)).replace(/(?: \((?:UTC|local)\)|（(?:UTC|本地时间)）)$/, "");
+    const when = (i.formatBucketTitle?.(s.busiest.key, i.spec.unit, i.tzOffsetMin) ?? bucketTitle(s.busiest.key, i.spec.unit, i.tzOffsetMin)).replace(ZONE_SUFFIX, "");
     out.push(i.labels?.busiest({ unit: unitWord, when, tokens: compact(s.busiest.total), share: fmtPct(share), period: period === "all time" ? "the retained history" : period }) ?? `The busiest ${unitWord} was ${when} with ${compact(s.busiest.total)} tokens, ${fmtPct(share)} of ${period === "all time" ? "the retained history" : period}.`);
   }
 

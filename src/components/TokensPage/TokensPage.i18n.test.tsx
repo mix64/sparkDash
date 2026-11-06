@@ -97,6 +97,22 @@ it("uses localized calendar titles and a coherent Chinese previous-period label"
   expect([...container.querySelectorAll<SVGRectElement>("svg rect[aria-label]")].some((node) => /年.*（UTC）/.test(node.getAttribute("aria-label") ?? ""))).toBe(true);
 });
 
+it("labels Japanese calendar days by month and day, keeps a space before an English unit, and drops the zone from the busiest-day tile", async () => {
+  const now = Date.now();
+  fetchHistory.mockResolvedValue({
+    generatedAt: now, retention: { days: 35, hours: 72 }, firstDay: null, firstHour: null,
+    day: bucketKeys("day", 14, now).map((key, i) => ({ ...row(key), completionTokens: i === 10 ? 9_000 : 100 })), hour: [],
+  });
+  const { container } = render(<TokensPage sparks={[makeSpark()]} />);
+  await flush();
+  await act(() => setLocale("ja"));
+  expect(container.textContent).toContain("vs previous 7 days");
+  expect([...container.querySelectorAll("svg text")].some((node) => /^\d{1,2}月\d{1,2}日$/.test(node.textContent ?? ""))).toBe(true);
+  const subs = [...container.querySelectorAll(".tk-tile__sub")].map((node) => node.textContent ?? "");
+  expect(subs.some((text) => /^\d{4}年\d{1,2}月\d{1,2}日\(.\)$/.test(text))).toBe(true);
+  expect([...container.querySelectorAll<SVGRectElement>("svg rect[aria-label]")].some((node) => /年.*（UTC）/.test(node.getAttribute("aria-label") ?? ""))).toBe(true);
+});
+
 it("shows a localized retryable error when loading rejects with a non-Error value", async () => {
   fetchHistory.mockRejectedValueOnce("offline");
   const { container } = render(<TokensPage sparks={[makeSpark()]} />);
